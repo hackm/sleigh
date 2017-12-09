@@ -123,6 +123,7 @@ func syncDeamon(d *Differ) {
 	for {
 		select {
 		case n := <-d.Notifications:
+			fmt.Println("differ: Notification")
 			switch n.Event {
 			case fsnotify.Create, fsnotify.Write:
 				if n.Type == File {

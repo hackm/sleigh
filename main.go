@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strings"
 	"sync"
 	"syscall"
 
@@ -80,15 +81,27 @@ func sleigh() {
 			case d := <-conn.Datagram:
 				var h Hey
 				var n Notification
-				if err := json.Unmarshal(d.Payload, &n); err == nil {
-					fmt.Printf("Notification")
+				str := string(d.Payload)
+
+				if strings.Contains(str, `"type"`) {
+					_ = json.Unmarshal(d.Payload, &n)
+					fmt.Println("Notification")
 					differ.Notifications <- n
 				} else if err := json.Unmarshal(d.Payload, &h); err == nil {
+					fmt.Println("Hey")
 					for _, item := range h.Items {
 						path := filepath.Join(wd, item.RelPath)
+						fmt.Println(path)
+
 						info, err := os.Stat(path)
 						if err != nil {
-							fmt.Printf("ERROR: %v\n", err)
+							differ.Notifications <- Notification{
+								Hostname: h.Hostname,
+								Event:    fsnotify.Write,
+								Type:     File,
+								Path:     item.RelPath,
+								ModTime:  item.ModTime,
+							}
 							continue
 						}
 						checksum, err := GetChecksum(path)
@@ -98,6 +111,8 @@ func sleigh() {
 						}
 						modtime := info.ModTime().UnixNano()
 						if checksum != item.Checksum {
+							fmt.Printf("%v != %v\n", checksum, item.Checksum)
+							fmt.Printf("%v , %v\n", item.ModTime, modtime)
 							if item.ModTime > modtime {
 								differ.Notifications <- Notification{
 									Hostname: h.Hostname,
@@ -115,6 +130,26 @@ func sleigh() {
 									ModTime:  modtime,
 								})
 							}
+						}
+					}
+					for _, local := range items {
+						hit := false
+						for _, remote := range h.Items {
+							if local.RelPath == remote.RelPath {
+								hit = true
+							}
+						}
+						if hit == false {
+							path := filepath.Join(wd, local.RelPath)
+							info, _ := os.Stat(path)
+
+							conn.Notify(Notification{
+								Hostname: hostname,
+								Event:    fsnotify.Write,
+								Type:     File,
+								Path:     local.RelPath,
+								ModTime:  info.ModTime().UnixNano(),
+							})
 						}
 					}
 				}
