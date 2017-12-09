@@ -23,6 +23,7 @@ type Item struct {
 	Tree []Item   `json:"tree"`
 }
 
+// Notification is packet for notify diff
 type Notification struct {
 	Hostname  string   `json:"hostname"`
 	Event     string   `json:"event"`
@@ -31,11 +32,16 @@ type Notification struct {
 	timestamp int64    `timestamp:"timestamp"`
 }
 
+// Event for file change
 type Event int
 
 const (
+	// Create file|dir
 	Create Event = iota
+	// Write file
 	Write
+	// Rename file|dir
 	Rename
+	// Delete file|dir
 	Delete
 )
