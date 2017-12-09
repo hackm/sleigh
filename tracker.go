@@ -53,24 +53,32 @@ func GetItems(root string, dir string, ignore IgnoreHandler) ([]Item, error) {
 				}
 				items = append(items, children...)
 			} else {
-				reader, err := os.OpenFile(path, os.O_RDONLY, 000)
+				checksum, err := GetChecksum(path)
 				if err != nil {
 					return nil, err
 				}
-				b, err := ioutil.ReadAll(reader)
-				if err != nil {
-					return nil, err
-				}
-				hash := sha256.Sum256(b)
 				items = append(items, Item{
 					RelPath:  evt.RelPath,
-					Checksum: hex.EncodeToString(hash[:]),
+					Checksum: checksum,
 					ModTime:  file.ModTime().UnixNano(),
 				})
 			}
 		}
 	}
 	return items, err
+}
+
+func GetChecksum(path string) (string, error) {
+	reader, err := os.OpenFile(path, os.O_RDONLY, 000)
+	if err != nil {
+		return "", err
+	}
+	b, err := ioutil.ReadAll(reader)
+	if err != nil {
+		return "", err
+	}
+	hash := sha256.Sum256(b)
+	return hex.EncodeToString(hash[:]), nil
 }
 
 // Event is struct for item change event
@@ -96,8 +104,9 @@ type Tracker struct {
 }
 
 // NewTracker is constructor for Tracker
-func NewTracker(ignore IgnoreHandler) *Tracker {
+func NewTracker(root string, ignore IgnoreHandler) *Tracker {
 	return &Tracker{
+		root:   root,
 		ignore: ignore,
 		Events: make(chan (Event)),
 		Errors: make(chan (error)),
@@ -105,16 +114,15 @@ func NewTracker(ignore IgnoreHandler) *Tracker {
 }
 
 // Start to watch items
-func (t *Tracker) Start(root string) (err error) {
+func (t *Tracker) Start() (err error) {
 	if t.watcher == nil {
 		if t.watcher, err = fsnotify.NewWatcher(); err != nil {
 			return
 		}
-		if err = t.addDirs(root); err != nil {
+		if err = t.addDirs(t.root); err != nil {
 			t.Close()
 			return
 		}
-		t.root = root
 		go track(t)
 	}
 	return

@@ -61,8 +61,8 @@ func TestNotificationSerialize(t *testing.T) {
 	if strings.Contains(str, `"path"`) == false {
 		t.Errorf("path not found")
 	}
-	if strings.Contains(str, `"timestamp"`) == false {
-		t.Errorf("timestamp not found")
+	if strings.Contains(str, `"modtime"`) == false {
+		t.Errorf("modtime not found")
 	}
 }
 

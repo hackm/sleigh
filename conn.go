@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"net"
 )
 
@@ -18,6 +19,7 @@ type Datagram struct {
 
 // Conn is process multicast deamon listener
 type Conn struct {
+	listener   *net.UDPConn
 	ListenAddr string
 	Datagram   chan (Datagram)
 	Errors     chan (error)
@@ -34,19 +36,23 @@ func NewConn(listenPort string) *Conn {
 
 // Listen to receive Datagram
 func (conn *Conn) Listen() {
+	fmt.Println(conn.ListenAddr)
 	addr, err := net.ResolveUDPAddr("udp", conn.ListenAddr)
 	if err != nil {
 		conn.Errors <- err
 	}
-	l, err := net.ListenMulticastUDP("udp", nil, addr)
-	defer l.Close()
+	conn.listener, err = net.ListenMulticastUDP("udp", nil, addr)
 	if err != nil {
 		conn.Errors <- err
 	}
-	l.SetReadBuffer(maxDatagramSize)
+	conn.listener.SetReadBuffer(maxDatagramSize)
+	go connDeamon(conn)
+}
+
+func connDeamon(conn *Conn) {
 	for {
 		b := make([]byte, maxDatagramSize)
-		n, src, err := l.ReadFromUDP(b)
+		n, src, err := conn.listener.ReadFromUDP(b)
 		if err != nil {
 			conn.Errors <- err
 		}
@@ -55,6 +61,10 @@ func (conn *Conn) Listen() {
 			Payload: b[:n],
 		}
 	}
+}
+
+func (conn *Conn) Close() {
+	conn.listener.Close()
 }
 
 // Hey is sending Hey

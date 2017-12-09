@@ -36,12 +36,12 @@ type Item struct {
 
 // Notification is packet for notify diff
 type Notification struct {
-	Hostname  string      `json:"hostname"`
-	Event     fsnotify.Op `json:"event"`
-	Type      ItemType    `json:"type"`
-	Path      string      `json:"path"`
-	Timestamp int64       `json:"timestamp"`
-	Dst       string      `json:"dst"`
+	Hostname string      `json:"hostname"`
+	Event    fsnotify.Op `json:"event"`
+	Type     ItemType    `json:"type"`
+	Path     string      `json:"path"`
+	ModTime  int64       `json:"modtime"`
+	Dst      string      `json:"dst"`
 }
 
 // EncodeChecksumIndex encode ChecksumIndex of gosync
