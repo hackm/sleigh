@@ -39,7 +39,8 @@ type Notification struct {
 	Event     string   `json:"event"`
 	Type      ItemType `json:"type"`
 	Path      string   `json:"path"`
-	timestamp int64    `timestamp:"timestamp"`
+	Timestamp int64    `json:"timestamp"`
+	Dst       string   `json:"dst"`
 }
 
 // Event for file change
