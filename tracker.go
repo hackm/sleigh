@@ -129,6 +129,9 @@ func (t *Tracker) convert(evt fsnotify.Event) (event Event, err error) {
 
 	// get name of file or directory
 	event.Name = filepath.Base(event.RelPath)
+	if event.Name == "." {
+		event.Name = strings.Replace(event.FullPath, filepath.Dir(event.FullPath), "", 1)[1:]
+	}
 
 	// when remove or rename, cannot read item stat.
 	if event.Op == fsnotify.Remove || event.Op == fsnotify.Rename {
