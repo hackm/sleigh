@@ -85,8 +85,8 @@ func (d *Differ) Close() {
 
 // Download file(diff sync)
 func (d *Differ) Download(path, hostname string, port int) (*os.File, error) {
-	contentURL := fmt.Sprintf("https://%s:%d/contents?path=%s", hostname, port, path)
-	summaryURL := fmt.Sprintf("https://%s:%d/summaries?path=%s&blockSize=%%d", hostname, port, path)
+	contentURL := fmt.Sprintf("http://%s:%d/contents?path=%s", hostname, port, path)
+	summaryURL := fmt.Sprintf("http://%s:%d/summaries?path=%s&blockSize=%%d", hostname, port, path)
 	fmt.Printf("differ: %v\n", contentURL)
 	fmt.Printf("differ: %v\n", summaryURL)
 
@@ -94,11 +94,13 @@ func (d *Differ) Download(path, hostname string, port int) (*os.File, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	local := filepath.Join(d.root, path)
 	input, err := os.OpenFile(local, os.O_RDONLY|os.O_CREATE, 0)
 	if err != nil {
 		return nil, err
 	}
+	defer input.Close()
 
 	temp, err := ioutil.TempFile("", uid())
 	if err != nil {
@@ -147,27 +149,28 @@ func syncDeamon(d *Differ) {
 					d.Errors <- err
 					continue
 				}
-				for {
-					output, err := os.OpenFile(filepath.Join(d.root, n.Path), os.O_WRONLY|os.O_CREATE, 0)
-					if err != nil {
-						d.Errors <- err
-						time.Sleep(3 * time.Second)
-						continue
-					}
-					err = output.Truncate(0)
-					if err != nil {
-						d.Errors <- err
-						time.Sleep(3 * time.Second)
-						continue
-					}
-					_, err = io.Copy(output, temp)
-					if err != nil {
-						d.Errors <- err
-						time.Sleep(3 * time.Second)
-						continue
-					}
-					break
-				}
+				fmt.Println("downloaded")
+				// for {
+				// 	output, err := os.OpenFile(filepath.Join(d.root, n.Path), os.O_WRONLY|os.O_CREATE, 0)
+				// 	if err != nil {
+				// 		d.Errors <- err
+				// 		time.Sleep(3 * time.Second)
+				// 		continue
+				// 	}
+				// 	err = output.Truncate(0)
+				// 	if err != nil {
+				// 		d.Errors <- err
+				// 		time.Sleep(3 * time.Second)
+				// 		continue
+				// 	}
+				// 	_, err = io.Copy(output, temp)
+				// 	if err != nil {
+				// 		d.Errors <- err
+				// 		time.Sleep(3 * time.Second)
+				// 		continue
+				// 	}
+				// 	break
+				// }
 			} else {
 				err := os.MkdirAll(filepath.Join(d.root, n.Path), os.ModeDir)
 				if err != nil {
@@ -221,6 +224,8 @@ func (d *Differ) createSummaryHandler() func(w http.ResponseWriter, req *http.Re
 			http.NotFound(w, req)
 			return
 		}
+
+		fmt.Printf("%v", info.Size())
 
 		b, err := EncodeChecksumIndex(file, info.Size(), uint(blockSize))
 		if err != nil {
@@ -324,6 +329,11 @@ func getSummary(urlFormat string, blockSize int64) (gosync.FileSummary, error) {
 	if err != nil {
 		fmt.Println("err in getSummary2")
 		return nil, err
+	}
+
+	if fileSize == 0 {
+		fmt.Println("fileSize is 0b")
+		return nil, fmt.Errorf("file size is 0b")
 	}
 
 	blockCount := fileSize / blockSize
