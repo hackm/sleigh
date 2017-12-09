@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"io/ioutil"
 	"log"
 	"os"
@@ -27,6 +29,48 @@ func GetDirs(dir string) []string {
 	}
 
 	return paths
+}
+
+// GetItems get all checksums in tree
+func GetItems(root string, dir string, ignore IgnoreHandler) ([]Item, error) {
+	files, err := ioutil.ReadDir(dir)
+	if err != nil {
+		return nil, err
+	}
+	items := []Item{}
+	for _, file := range files {
+		name := file.Name()
+		path := filepath.Join(dir, name)
+		evt, err := newEvent(root, path, fsnotify.Write)
+		if err != nil {
+			return nil, err
+		}
+		if ignore(evt) == false {
+			if evt.Dir {
+				children, err := GetItems(root, path, ignore)
+				if err != nil {
+					return nil, err
+				}
+				items = append(items, children...)
+			} else {
+				reader, err := os.OpenFile(path, os.O_RDONLY, 000)
+				if err != nil {
+					return nil, err
+				}
+				b, err := ioutil.ReadAll(reader)
+				if err != nil {
+					return nil, err
+				}
+				hash := sha256.Sum256(b)
+				items = append(items, Item{
+					RelPath:  evt.RelPath,
+					Checksum: hex.EncodeToString(hash[:]),
+					ModTime:  file.ModTime().UnixNano(),
+				})
+			}
+		}
+	}
+	return items, err
 }
 
 // Event is struct for item change event
@@ -115,12 +159,17 @@ func track(t *Tracker) {
 }
 
 func (t *Tracker) convert(evt fsnotify.Event) (event Event, err error) {
+	event, err = newEvent(t.root, evt.Name, evt.Op)
+	return
+}
+
+func newEvent(root, fullpath string, op fsnotify.Op) (event Event, err error) {
 	event = Event{
-		Op:       evt.Op,
-		FullPath: evt.Name,
+		Op:       op,
+		FullPath: fullpath,
 	}
 	// Get relative path from root
-	event.RelPath, err = filepath.Rel(t.root, event.FullPath)
+	event.RelPath, err = filepath.Rel(root, event.FullPath)
 	if err != nil {
 		return
 	}
@@ -139,7 +188,7 @@ func (t *Tracker) convert(evt fsnotify.Event) (event Event, err error) {
 	}
 
 	// check item type: directory or file
-	info, err := os.Stat(evt.Name)
+	info, err := os.Stat(event.FullPath)
 	if err != nil {
 		return
 	}
