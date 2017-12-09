@@ -192,7 +192,7 @@ func syncDeamon(d *Differ) {
 func (d *Differ) createContentHandler() func(w http.ResponseWriter, req *http.Request) {
 	// handler for content download
 	return func(w http.ResponseWriter, req *http.Request) {
-		path := req.URL.Query().Get("path")
+		path := filepath.Join(d.root, req.URL.Query().Get("path"))
 		fmt.Printf("contentHandler: %v\n", path)
 		if _, err := os.Stat(path); err != nil {
 			http.NotFound(w, req)
@@ -207,7 +207,7 @@ func (d *Differ) createSummaryHandler() func(w http.ResponseWriter, req *http.Re
 	return func(w http.ResponseWriter, req *http.Request) {
 		var blockSize uint64 = 1024 * 1024
 		blockSize, err := strconv.ParseUint(req.URL.Query().Get("blockSize"), 10, 32)
-		path := req.URL.Query().Get("path")
+		path := filepath.Join(d.root, req.URL.Query().Get("path"))
 		fmt.Printf("contentHandler: %v\n", path)
 		file, err := os.OpenFile(path, os.O_RDONLY, 0)
 		if err != nil {
