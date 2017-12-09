@@ -5,29 +5,12 @@ import (
 	"encoding/json"
 	"log"
 	"net"
-	"os"
-	"path/filepath"
-	"strings"
-
-	"github.com/fsnotify/fsnotify"
 )
 
 const (
 	multicastAddr   = "224.0.0.1:8986"
 	maxDatagramSize = 8192
 )
-
-// IgnoreHandler is handler type for decision ignore file or directory
-type IgnoreHandler func(Event) bool
-
-// Tracker is watcher for items
-type Tracker struct {
-	root    string
-	ignore  IgnoreHandler
-	watcher *fsnotify.Watcher
-	Events  chan (Event)
-	Errors  chan (error)
-}
 
 // Comm is notifier deamon
 type Comm struct {
@@ -47,7 +30,8 @@ func NewComm() *Comm {
 
 // Start to listen Hey and Diff Event
 func (c *Comm) Start() (err error) {
-	if addr, err = net.ResolveUDPAddr("udp", a); err != nil {
+	addr, err := net.ResolveUDPAddr("udp", c.listenAddr)
+	if err != nil {
 		return
 	}
 	l, err := net.ListenMulticastUDP("udp", nil, addr)
@@ -70,122 +54,24 @@ func commHandler(src *net.UDPAddr, n int, b []byte) {
 	// deamon should listen Hey to return notification
 	// deamon should listen Notification to check diff
 	// deamon should listen File event to notify
-	json.Unmarshal()
 	log.Println(n, "bytes read from", src)
 	log.Println(hex.Dump(b[:n]))
 }
 
-func (c *Comm) Close() error {
-
+func (c *Comm) Close() {
+	return
 }
 
-func (h Hey) Send() int {
-	n, err := sendUDPMulticast(h)
+func (hey Hey) Send() {
+	var err error
+	b, err := json.Marshal(hey)
 	if err != nil {
 		log.Fatal(err)
 	}
-	return n
-}
-
-// Start to watch items
-func (t *Tracker) Start() (err error) {
-	if t.watcher == nil {
-		if t.watcher, err = fsnotify.NewWatcher(); err != nil {
-			return
-		}
-		if err = t.addDirs(root); err != nil {
-			t.Close()
-			return
-		}
-		t.root = root
-		go track(t)
-	}
-	return
-}
-
-// Close to watch items
-func (t *Tracker) Close() {
-	if t.watcher != nil {
-		t.watcher.Close()
-	}
-}
-
-func (t *Tracker) addDirs(path string) error {
-	targets := GetDirs(path)
-	for _, dir := range targets {
-		err := t.watcher.Add(dir)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func track(t *Tracker) {
-	for {
-		select {
-		case evt := <-t.watcher.Events:
-			event, err := t.convert(evt)
-			if err != nil {
-				t.Errors <- err
-			}
-			if t.ignore(event) == false {
-				if event.Dir && event.Op == fsnotify.Create {
-					t.watcher.Add(event.FullPath)
-				}
-				t.Events <- event
-			}
-		case err := <-t.watcher.Errors:
-			t.Errors <- err
-		}
-	}
-}
-
-func (t *Tracker) convert(evt fsnotify.Event) (event Event, err error) {
-	event, err = newEvent(t.root, evt.Name, evt.Op)
-	return
-}
-
-func newEvent(root, fullpath string, op fsnotify.Op) (event Event, err error) {
-	event = Event{
-		Op:       op,
-		FullPath: fullpath,
-	}
-	// Get relative path from root
-	event.RelPath, err = filepath.Rel(root, event.FullPath)
-	if err != nil {
-		return
-	}
-	// Get relative directory path from root
-	event.Parent = filepath.Dir(event.RelPath)
-
-	// get name of file or directory
-	event.Name = filepath.Base(event.RelPath)
-	if event.Name == "." {
-		event.Name = strings.Replace(event.FullPath, filepath.Dir(event.FullPath), "", 1)[1:]
-	}
-
-	// when remove or rename, cannot read item stat.
-	if event.Op == fsnotify.Remove || event.Op == fsnotify.Rename {
-		return
-	}
-
-	// check item type: directory or file
-	info, err := os.Stat(event.FullPath)
-	if err != nil {
-		return
-	}
-	event.Dir = info.IsDir()
-
-	return
-}
-
-func (d Datagram) Notify() int {
-	n, err := sendUDPMulticast(d)
+	_, err = sendUDPMulticast(b)
 	if err != nil {
 		log.Fatal(err)
 	}
-	return n
 }
 
 func ListenNotification(a string, h func(*net.UDPAddr, int, []byte)) {
