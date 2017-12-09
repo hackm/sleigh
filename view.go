@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/fatih/color"
-	"github.com/sethgrid/multibar"
+	pb "gopkg.in/cheggaaa/pb.v1"
 )
 
 func showTextLogo() {
@@ -58,23 +58,11 @@ func showLogo() {
 }
 
 // barName is ProgressBarName, progressChannel is return 0..100 percentage int channel.
-func showProgress(barName string, progressChannel chan int) {
-	// create the multibar container
-	// this allows our bars to work together without stomping on one another
-	progressBars, _ := multibar.New()
-	progressBars.Println("We can separate bars with blocks of text, or have them grouped.\n")
-
-	// we will update the progress down below in the mock work section with barProgress1(int)
-	barProgress := progressBars.MakeBar(100, barName)
-
-	// listen in for changes on the progress bars
-	// I should be able to move this into the constructor at some point
-	go progressBars.Listen()
-
-	// myChからの送信を受け取る
+func showProgress(barName string, progressChannel chan int, total int) {
+	bar := pb.New(total).Prefix(barName)
+	bar.Start()
 	for progress := range progressChannel {
-		barProgress(progress)
+		bar.Set(progress)
 	}
-	// continue doing other work
-	fmt.Println("All Bars Complete")
+	bar.FinishPrint("The End!")
 }

@@ -17,7 +17,7 @@ func main() {
 	*/
 	progressChannel := make(chan int)
 
-	go showProgress("ProgressBar", progressChannel)
+	go showProgress("ProgressBar", progressChannel, 100)
 
 	wg.Add(1)
 	// do something asyn that we can get updates upon
@@ -25,7 +25,7 @@ func main() {
 	// this could be based on transferred bytes or similar
 	for i := 0; i <= 100; i++ {
 		progressChannel <- i
-		time.Sleep(time.Millisecond * 15)
+		time.Sleep(time.Millisecond * 10)
 	}
 	close(progressChannel)
 	wg.Done()
