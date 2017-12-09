@@ -28,9 +28,11 @@ const (
 
 // Item is directory tree struct
 type Item struct {
-	Type ItemType `json:"type"`
-	Name string   `json:"name"`
-	Tree []Item   `json:"tree"`
+	Type     ItemType `json:"type"`
+	Name     string   `json:"name"`
+	Checksum string   `json:"checksum"`
+	ModTime  int64    `json:"modtime"`
+	Tree     []Item   `json:"tree"`
 }
 
 // Notification is packet for notify diff
