@@ -8,6 +8,7 @@ import (
 	"github.com/Redundancy/go-sync/chunks"
 	"github.com/Redundancy/go-sync/filechecksum"
 	"github.com/Redundancy/go-sync/index"
+	"github.com/fsnotify/fsnotify"
 )
 
 // Hey is first message packet through UDP multicast
@@ -37,27 +38,13 @@ type Item struct {
 
 // Notification is packet for notify diff
 type Notification struct {
-	Hostname  string   `json:"hostname"`
-	Event     string   `json:"event"`
-	Type      ItemType `json:"type"`
-	Path      string   `json:"path"`
-	Timestamp int64    `json:"timestamp"`
-	Dst       string   `json:"dst"`
+	Hostname  string      `json:"hostname"`
+	Event     fsnotify.Op `json:"event"`
+	Type      ItemType    `json:"type"`
+	Path      string      `json:"path"`
+	Timestamp int64       `json:"timestamp"`
+	Dst       string      `json:"dst"`
 }
-
-// Event for file change
-type Event int
-
-const (
-	// Create file|dir
-	Create Event = iota
-	// Write file
-	Write
-	// Rename file|dir
-	Rename
-	// Delete file|dir
-	Delete
-)
 
 // EncodeChecksumIndex encode ChecksumIndex of gosync
 func EncodeChecksumIndex(content io.Reader, fileSize int64, blockSize uint) (io.ReadSeeker, error) {
