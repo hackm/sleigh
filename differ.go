@@ -89,6 +89,8 @@ func (d *Differ) Close() {
 func (d *Differ) Download(path, hostname string, port int) (*os.File, error) {
 	contentURL := fmt.Sprintf("https://%s:%d/contents/%s", hostname, port, path)
 	summaryURL := fmt.Sprintf("https://%s:%d/summaries/%s?blockSize=%%d", hostname, port, path)
+	fmt.Printf("differ: %v\n", contentURL)
+	fmt.Printf("differ: %v\n", summaryURL)
 
 	fs, err := getSummary(summaryURL, blockSize)
 	if err != nil {
@@ -105,6 +107,7 @@ func (d *Differ) Download(path, hostname string, port int) (*os.File, error) {
 		return nil, err
 	}
 	// defer os.Remove(temp.Name())
+	fmt.Printf("differ: pre rsync\n")
 
 	rsync := makeRSync(input, contentURL, temp, fs)
 	defer rsync.Close()
@@ -137,7 +140,10 @@ func syncDeamon(d *Differ) {
 		fmt.Println("differ: Notification")
 		switch n.Event {
 		case fsnotify.Create, fsnotify.Write:
+			fmt.Println("differ: create")
 			if n.Type == File {
+				fmt.Println("differ: file")
+
 				temp, err := d.Download(n.Path, n.Hostname, d.port)
 				if err != nil {
 					d.Errors <- err
@@ -188,6 +194,7 @@ func (d *Differ) createContentHandler() func(w http.ResponseWriter, req *http.Re
 	// handler for content download
 	return func(w http.ResponseWriter, req *http.Request) {
 		path := filepath.Join(d.root, strings.Replace(req.URL.Path, "/contents/", "", 1))
+		fmt.Printf("contentHandler: %v\n", path)
 		if _, err := os.Stat(path); err != nil {
 			http.NotFound(w, req)
 			return
@@ -203,6 +210,7 @@ func (d *Differ) createSummaryHandler() func(w http.ResponseWriter, req *http.Re
 		blockSize, err := strconv.ParseUint(req.URL.Query().Get("blockSize"), 10, 32)
 
 		path := filepath.Join(d.root, strings.Replace(req.URL.Path, "/summaries/", "", 1))
+		fmt.Printf("contentHandler: %v\n", path)
 		file, err := os.OpenFile(path, os.O_RDONLY, 0)
 		if err != nil {
 			http.NotFound(w, req)
@@ -303,7 +311,12 @@ func newClient() *http.Client {
 // GetSummary get summary from remote
 func getSummary(urlFormat string, blockSize int64) (gosync.FileSummary, error) {
 	res, err := newClient().Get(fmt.Sprintf(urlFormat, blockSize))
+
+	if res.StatusCode == 404 {
+		return nil, fmt.Errorf("NotFound")
+	}
 	if err != nil {
+		fmt.Println("err in getSummary1")
 		return nil, err
 	}
 
@@ -311,6 +324,7 @@ func getSummary(urlFormat string, blockSize int64) (gosync.FileSummary, error) {
 
 	fileSize, referenceFileIndex, checksumLookup, err := DecodeChecksumIndex(res.Body)
 	if err != nil {
+		fmt.Println("err in getSummary2")
 		return nil, err
 	}
 
