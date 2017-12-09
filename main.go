@@ -39,7 +39,7 @@ func main() {
 }
 
 func ignore(evt Event) bool {
-	return false
+	return strings.Contains(evt.RelPath, ".sleigh")
 }
 
 func sleigh() {
@@ -52,6 +52,7 @@ func sleigh() {
 		fmt.Println("Cannot get hostname.")
 		os.Exit(1)
 	}
+	fmt.Printf("%s\n", hostname)
 	wd, err := os.Getwd()
 	if err != nil {
 		fmt.Println("Cannot get current working directory.")
@@ -72,7 +73,7 @@ func sleigh() {
 	tracker := NewTracker(wd, ignore)
 	defer tracker.Close()
 
-	differ := NewDiffer(hostname, int(options.Listen), options.Room)
+	differ := NewDiffer(hostname, int(options.Listen), wd)
 	defer differ.Close()
 
 	go func() {
@@ -85,7 +86,7 @@ func sleigh() {
 
 				if strings.Contains(str, `"type"`) {
 					_ = json.Unmarshal(d.Payload, &n)
-					fmt.Println("Notification")
+					fmt.Printf("Notification: %v", string(d.Payload))
 					differ.Notifications <- n
 				} else if err := json.Unmarshal(d.Payload, &h); err == nil {
 					fmt.Println("Hey")
@@ -143,10 +144,10 @@ func sleigh() {
 						if hit == false {
 							path := filepath.Join(wd, local.RelPath)
 							info, _ := os.Stat(path)
-
+							fmt.Printf("lack %v\n", local.RelPath)
 							conn.Notify(Notification{
 								Hostname: hostname,
-								Event:    fsnotify.Write,
+								Event:    fsnotify.Create,
 								Type:     File,
 								Path:     local.RelPath,
 								ModTime:  info.ModTime().UnixNano(),

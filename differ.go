@@ -4,7 +4,6 @@ import (
 	"crypto/md5"
 	"crypto/rand"
 	"crypto/rsa"
-	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/base64"
@@ -67,7 +66,7 @@ func (d *Differ) Start() error {
 	fmt.Printf("ListenAndServeTLS;%v\n", fmt.Sprintf(":%d", d.port))
 
 	go func() {
-		err = http.ListenAndServeTLS(fmt.Sprintf(":%d", d.port), crtFile, keyFile, s)
+		err = http.ListenAndServe(fmt.Sprintf(":%d", d.port), s)
 		if err != nil {
 			fmt.Printf("%v\n", err)
 		}
@@ -101,7 +100,7 @@ func (d *Differ) Download(path, hostname string, port int) (*os.File, error) {
 		return nil, err
 	}
 
-	temp, err := ioutil.TempFile(hostname, uid())
+	temp, err := ioutil.TempFile("", uid())
 	if err != nil {
 		return nil, err
 	}
@@ -297,13 +296,14 @@ func geneCrt(crtFile, keyFile, hostname string) error {
 
 // NewClient create HttpClient for LAN https. this client skip verify
 func newClient() *http.Client {
-	return &http.Client{
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: true,
-			},
-		},
-	}
+	// return &http.Client{
+	// 	Transport: &http.Transport{
+	// 		TLSClientConfig: &tls.Config{
+	// 			InsecureSkipVerify: true,
+	// 		},
+	// 	},
+	// }
+	return http.DefaultClient
 }
 
 // GetSummary get summary from remote
@@ -350,7 +350,7 @@ func makeRSync(local gosync.ReadSeekerAt, remote string, output io.Writer, fs go
 		Source: blocksources.NewBlockSourceBase(
 			&HttpRequester{
 				Url:    remote,
-				Client: http.DefaultClient,
+				Client: newClient(),
 			},
 			blocksources.MakeFileSizedBlockResolver(
 				uint64(fs.GetBlockSize()),
