@@ -14,10 +14,7 @@ func TestItemSerialize(t *testing.T) {
 		t.Fatalf("cannot serialize 'Item': %v", err)
 	}
 	str := string(b)
-	if strings.Contains(str, "type") == false {
-		t.Errorf("type not found")
-	}
-	if strings.Contains(str, "name") == false {
+	if strings.Contains(str, "path") == false {
 		t.Errorf("name not found")
 	}
 	if strings.Contains(str, "checksum") == false {
