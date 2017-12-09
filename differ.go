@@ -144,7 +144,7 @@ func syncDeamon(d *Differ) {
 			if n.Type == File {
 				fmt.Println("differ: file")
 
-				temp, err := d.Download(n.Path, n.Hostname, d.port)
+				_, err := d.Download(n.Path, n.Hostname, d.port)
 				if err != nil {
 					d.Errors <- err
 					continue
