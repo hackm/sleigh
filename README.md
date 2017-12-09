@@ -1,11 +1,12 @@
 # sleigh
-TBD
-# sleigh
 
-## About
+`Sleigh` is simple and light weight file sync tool.  
+You can sync file some os platform(Windows, Mac, Linux,,) in the Local Area Network.
 
-`Sleigh` is simple and light weight file sync tool. 
-You can sync file some os platform(Windows, Mac, Linux,,) in closed internet.
+[![Build Status](https://travis-ci.org/hackm/sleigh.svg?branch=master)](https://travis-ci.org/hackm/sleigh)
+[![Coverage Status](https://coveralls.io/repos/github/hackm/sleigh/badge.svg?branch=master)](https://coveralls.io/github/hackm/sleigh?branch=master)
+[![Go Report Card](https://goreportcard.com/badge/github.com/hackm/sleigh)](https://goreportcard.com/report/github.com/hackm/sleigh)
+[![MIT License](http://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/hackm/sleigh/blob/master/LICENSE)
 
 ## Run
 
@@ -43,4 +44,10 @@ go build
 | --password | -p | room password. |
 | --listen | -l | listen port number. default:  |
 
+## Contribute
+
+Please follow [Contributor's Guide](CONTRIBUTING.md)
+
 ## License
+
+[MIT © HackM](LICENSE)
