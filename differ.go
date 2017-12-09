@@ -37,8 +37,8 @@ type Differ struct {
 	hostname      string
 	port          int
 	root          string
-	Notifications chan (Notification)
-	Errors        chan (error)
+	Notifications chan Notification
+	Errors        chan error
 }
 
 func NewDiffer(hostname string, port int, root string) *Differ {
@@ -46,25 +46,37 @@ func NewDiffer(hostname string, port int, root string) *Differ {
 		hostname:      hostname,
 		port:          port,
 		root:          root,
-		Notifications: make(chan (Notification)),
-		Errors:        make(chan (error)),
+		Notifications: make(chan Notification, 1),
+		Errors:        make(chan error),
 	}
 }
 
 // Start differ
 func (d *Differ) Start() error {
-	geneCrt(crtFile, keyFile, d.hostname)
+	fmt.Printf("gene\n")
+	err := geneCrt(crtFile, keyFile, d.hostname)
+	fmt.Printf("end\n")
+	if err != nil {
+		fmt.Printf("%v\n", err)
+		return err
+	}
 
 	s := http.NewServeMux()
 	s.HandleFunc("/contents", d.createContentHandler())
 	s.HandleFunc("/summaries", d.createSummaryHandler())
 
-	err := http.ListenAndServeTLS(fmt.Sprintf(":%d", d.port), crtFile, keyFile, s)
-	if err != nil {
-		return err
-	}
+	fmt.Printf("ListenAndServeTLS;%v\n", fmt.Sprintf(":%d", d.port))
+
+	go func() {
+		err = http.ListenAndServeTLS(fmt.Sprintf(":%d", d.port), crtFile, keyFile, s)
+		if err != nil {
+			fmt.Printf("%v\n", err)
+		}
+	}()
 
 	go syncDeamon(d)
+
+	fmt.Printf("finish\n")
 
 	return nil
 }
@@ -121,47 +133,30 @@ func (d *Differ) Download(path, hostname string, port int) (*os.File, error) {
 
 func syncDeamon(d *Differ) {
 	for {
-		select {
-		case n := <-d.Notifications:
-			fmt.Println("differ: Notification")
-			switch n.Event {
-			case fsnotify.Create, fsnotify.Write:
-				if n.Type == File {
-					temp, err := d.Download(n.Path, n.Hostname, d.port)
+		n := <-d.Notifications
+		fmt.Println("differ: Notification")
+		switch n.Event {
+		case fsnotify.Create, fsnotify.Write:
+			if n.Type == File {
+				temp, err := d.Download(n.Path, n.Hostname, d.port)
+				if err != nil {
+					d.Errors <- err
+					continue
+				}
+				for {
+					output, err := os.OpenFile(filepath.Join(d.root, n.Path), os.O_WRONLY|os.O_CREATE, 0)
 					if err != nil {
 						d.Errors <- err
+						time.Sleep(3 * time.Second)
 						continue
 					}
-					for {
-						output, err := os.OpenFile(filepath.Join(d.root, n.Path), os.O_WRONLY|os.O_CREATE, 0)
-						if err != nil {
-							d.Errors <- err
-							time.Sleep(3 * time.Second)
-							continue
-						}
-						err = output.Truncate(0)
-						if err != nil {
-							d.Errors <- err
-							time.Sleep(3 * time.Second)
-							continue
-						}
-						_, err = io.Copy(output, temp)
-						if err != nil {
-							d.Errors <- err
-							time.Sleep(3 * time.Second)
-							continue
-						}
-						break
-					}
-				} else {
-					err := os.MkdirAll(filepath.Join(d.root, n.Path), os.ModeDir)
+					err = output.Truncate(0)
 					if err != nil {
 						d.Errors <- err
+						time.Sleep(3 * time.Second)
+						continue
 					}
-				}
-			case fsnotify.Rename, fsnotify.Remove:
-				for {
-					err := os.Remove(n.Path)
+					_, err = io.Copy(output, temp)
 					if err != nil {
 						d.Errors <- err
 						time.Sleep(3 * time.Second)
@@ -169,6 +164,21 @@ func syncDeamon(d *Differ) {
 					}
 					break
 				}
+			} else {
+				err := os.MkdirAll(filepath.Join(d.root, n.Path), os.ModeDir)
+				if err != nil {
+					d.Errors <- err
+				}
+			}
+		case fsnotify.Rename, fsnotify.Remove:
+			for {
+				err := os.Remove(n.Path)
+				if err != nil {
+					d.Errors <- err
+					time.Sleep(3 * time.Second)
+					continue
+				}
+				break
 			}
 		}
 	}
@@ -228,6 +238,7 @@ func uid() string {
 }
 
 func geneCrt(crtFile, keyFile, hostname string) error {
+	// os.Mkdir(".sleigh", os.ModeDir)
 	priv, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		return err

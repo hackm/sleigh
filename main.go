@@ -62,10 +62,10 @@ func sleigh() {
 		fmt.Println("Cannot get items in current working directory.")
 		os.Exit(1)
 	}
-	hey := Hey{
-		Hostname: hostname,
-		Items:    items,
-	}
+	// hey := Hey{
+	// 	Hostname: hostname,
+	// 	Items:    items,
+	// }
 
 	conn := NewConn("8986")
 
@@ -95,6 +95,7 @@ func sleigh() {
 
 						info, err := os.Stat(path)
 						if err != nil {
+							fmt.Println("here")
 							differ.Notifications <- Notification{
 								Hostname: h.Hostname,
 								Event:    fsnotify.Write,
@@ -181,10 +182,11 @@ func sleigh() {
 		}
 	}()
 
-	conn.Listen()
+	//conn.Listen()
 	differ.Start()
-	tracker.Start()
-	conn.Hey(hey)
+	//tracker.Start()
+	//conn.Hey(hey)
+	differ.Notifications <- Notification{}
 
 	// /*
 	// 	*** mock work ***
