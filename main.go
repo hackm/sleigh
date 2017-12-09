@@ -8,6 +8,7 @@ import (
 var wg sync.WaitGroup
 
 func main() {
+	showTextLogo()
 	showLogo()
 	/*
 		*** mock work ***
