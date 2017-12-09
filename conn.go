@@ -53,8 +53,10 @@ func connDeamon(conn *Conn) {
 	for {
 		b := make([]byte, maxDatagramSize)
 		n, src, err := conn.listener.ReadFromUDP(b)
+		fmt.Printf("%d\n", n)
 		if err != nil {
 			conn.Errors <- err
+			continue
 		}
 		conn.Datagram <- Datagram{
 			SrcAddr: *src,

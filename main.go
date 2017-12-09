@@ -38,7 +38,7 @@ func main() {
 }
 
 func ignore(evt Event) bool {
-	return true
+	return false
 }
 
 func sleigh() {
@@ -81,6 +81,7 @@ func sleigh() {
 				var h Hey
 				var n Notification
 				if err := json.Unmarshal(d.Payload, &n); err == nil {
+					fmt.Printf("Notification")
 					differ.Notifications <- n
 				} else if err := json.Unmarshal(d.Payload, &h); err == nil {
 					for _, item := range h.Items {
@@ -118,6 +119,7 @@ func sleigh() {
 					}
 				}
 			case evt := <-tracker.Events:
+				fmt.Println("Tracker")
 				info, err := os.Stat(evt.FullPath)
 				if err != nil {
 					fmt.Printf("ERROR: %v\n", err)

@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -116,6 +117,7 @@ func NewTracker(root string, ignore IgnoreHandler) *Tracker {
 // Start to watch items
 func (t *Tracker) Start() (err error) {
 	if t.watcher == nil {
+		fmt.Println("StartTrack")
 		if t.watcher, err = fsnotify.NewWatcher(); err != nil {
 			return
 		}
