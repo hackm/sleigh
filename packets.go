@@ -14,7 +14,7 @@ import (
 // Hey is first message packet through UDP multicast
 type Hey struct {
 	Hostname string `json:"hostname"`
-	Tree     []Item `json:"tree"`
+	Items    []Item `json:"items"`
 }
 
 // ItemType is type for tree item
@@ -29,11 +29,9 @@ const (
 
 // Item is directory tree struct
 type Item struct {
-	Type     ItemType `json:"type"`
-	Name     string   `json:"name"`
-	Checksum string   `json:"checksum"`
-	ModTime  int64    `json:"modtime"`
-	Tree     []Item   `json:"tree"`
+	RelPath  string `json:"path"`
+	Checksum string `json:"checksum"`
+	ModTime  int64  `json:"modtime"`
 }
 
 // Notification is packet for notify diff
