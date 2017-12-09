@@ -17,7 +17,6 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/Redundancy/go-sync"
@@ -87,8 +86,8 @@ func (d *Differ) Close() {
 
 // Download file(diff sync)
 func (d *Differ) Download(path, hostname string, port int) (*os.File, error) {
-	contentURL := fmt.Sprintf("https://%s:%d/contents/%s", hostname, port, path)
-	summaryURL := fmt.Sprintf("https://%s:%d/summaries/%s?blockSize=%%d", hostname, port, path)
+	contentURL := fmt.Sprintf("https://%s:%d/contents?path=%s", hostname, port, path)
+	summaryURL := fmt.Sprintf("https://%s:%d/summaries?path=%s&blockSize=%%d", hostname, port, path)
 	fmt.Printf("differ: %v\n", contentURL)
 	fmt.Printf("differ: %v\n", summaryURL)
 
@@ -193,7 +192,7 @@ func syncDeamon(d *Differ) {
 func (d *Differ) createContentHandler() func(w http.ResponseWriter, req *http.Request) {
 	// handler for content download
 	return func(w http.ResponseWriter, req *http.Request) {
-		path := filepath.Join(d.root, strings.Replace(req.URL.Path, "/contents/", "", 1))
+		path := req.URL.Query().Get("path")
 		fmt.Printf("contentHandler: %v\n", path)
 		if _, err := os.Stat(path); err != nil {
 			http.NotFound(w, req)
@@ -208,8 +207,7 @@ func (d *Differ) createSummaryHandler() func(w http.ResponseWriter, req *http.Re
 	return func(w http.ResponseWriter, req *http.Request) {
 		var blockSize uint64 = 1024 * 1024
 		blockSize, err := strconv.ParseUint(req.URL.Query().Get("blockSize"), 10, 32)
-
-		path := filepath.Join(d.root, strings.Replace(req.URL.Path, "/summaries/", "", 1))
+		path := req.URL.Query().Get("path")
 		fmt.Printf("contentHandler: %v\n", path)
 		file, err := os.OpenFile(path, os.O_RDONLY, 0)
 		if err != nil {
