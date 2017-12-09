@@ -144,33 +144,43 @@ func syncDeamon(d *Differ) {
 			if n.Type == File {
 				fmt.Println("differ: file")
 
-				_, err := d.Download(n.Path, n.Hostname, d.port)
+				temp, err := d.Download(n.Path, n.Hostname, d.port)
 				if err != nil {
 					d.Errors <- err
 					continue
 				}
 				fmt.Println("downloaded")
-				// for {
-				// 	output, err := os.OpenFile(filepath.Join(d.root, n.Path), os.O_WRONLY|os.O_CREATE, 0)
-				// 	if err != nil {
-				// 		d.Errors <- err
-				// 		time.Sleep(3 * time.Second)
-				// 		continue
-				// 	}
-				// 	err = output.Truncate(0)
-				// 	if err != nil {
-				// 		d.Errors <- err
-				// 		time.Sleep(3 * time.Second)
-				// 		continue
-				// 	}
-				// 	_, err = io.Copy(output, temp)
-				// 	if err != nil {
-				// 		d.Errors <- err
-				// 		time.Sleep(3 * time.Second)
-				// 		continue
-				// 	}
-				// 	break
-				// }
+				temp.Seek(0, 0)
+				if err != nil {
+					d.Errors <- err
+					continue
+				}
+				c1, _ := GetChecksum(temp.Name())
+				c2, _ := GetChecksum(filepath.Join(d.root, n.Path))
+				if c1 != c2 {
+					for {
+						output, err := os.OpenFile(filepath.Join(d.root, n.Path), os.O_WRONLY|os.O_CREATE, 0)
+						if err != nil {
+							d.Errors <- err
+							time.Sleep(3 * time.Second)
+							continue
+						}
+						err = output.Truncate(0)
+						if err != nil {
+							d.Errors <- err
+							time.Sleep(3 * time.Second)
+							continue
+						}
+						_, err = io.Copy(output, temp)
+						if err != nil {
+							d.Errors <- err
+							time.Sleep(3 * time.Second)
+							continue
+						}
+						break
+					}
+				}
+				os.Remove(temp.Name())
 			} else {
 				err := os.MkdirAll(filepath.Join(d.root, n.Path), os.ModeDir)
 				if err != nil {
