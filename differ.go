@@ -177,10 +177,13 @@ func syncDeamon(d *Differ) {
 							time.Sleep(3 * time.Second)
 							continue
 						}
+						output.Close()
 						break
 					}
 				}
 				os.Remove(temp.Name())
+				temp.Close()
+
 			} else {
 				err := os.MkdirAll(filepath.Join(d.root, n.Path), os.ModeDir)
 				if err != nil {
