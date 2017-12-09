@@ -1,7 +1,0 @@
-language: go
-go:
-  - tip
-script:
-  - echo -e 'travis_fold:start:UnitTest'
-  - go test -v github.com/Redundancy/go-sync/...
-  - echo -e 'travis_fold:end:UnitTest'
