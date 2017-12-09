@@ -34,8 +34,8 @@ func TestHeySerialize(t *testing.T) {
 	if strings.Contains(str, `"hostname"`) == false {
 		t.Errorf("hotname not found")
 	}
-	if strings.Contains(str, `"tree"`) == false {
-		t.Errorf("tree not found")
+	if strings.Contains(str, `"items"`) == false {
+		t.Errorf("imtes not found")
 	}
 }
 
