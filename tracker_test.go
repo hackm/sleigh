@@ -3,6 +3,8 @@ package main
 import (
 	"os"
 	"path"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/fsnotify/fsnotify"
@@ -110,5 +112,26 @@ func TestConvert_RemoveFile(t *testing.T) {
 	}
 	if evt.Parent != "." {
 		t.Errorf("Parent is invalid: %v", evt.Parent)
+	}
+}
+
+func TestGetItems(t *testing.T) {
+	wd, err := os.Getwd()
+	if err != nil {
+		t.Fatal("cannot get working directory")
+	}
+	items, err := GetItems(wd, wd, func(evt Event) bool { return strings.Contains(evt.RelPath, "_test.go") })
+	if err != nil {
+		t.Fatal("cannot get items")
+	}
+	_, err = os.Stat(filepath.Join(wd, items[0].RelPath))
+	if err != nil {
+		t.Errorf("RelPath is invalid: %v", items[0].RelPath)
+	}
+	if items[0].Checksum == "" {
+		t.Error("Checksum is not set")
+	}
+	if items[0].ModTime <= 0 {
+		t.Errorf("ModTime is not set %v", items[0].ModTime)
 	}
 }
