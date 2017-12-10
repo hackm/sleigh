@@ -74,7 +74,12 @@ $sleigh -r hackm -p pass
 
 ## Motivation
 
-- 
+- We want good tool for share files easily and fast in poor network. 
+- It's may be beneficial for crowded place like hackathon venue.
+- We often face to take time to sync on Dropbox in there places.
+- AirDrop? I'm Windows User...
+- Resilio Sync? It's huge...
+- For us > For someone 
 
 ## TODO
 
