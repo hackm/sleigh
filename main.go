@@ -15,9 +15,9 @@ import (
 )
 
 type Options struct {
-	Room     string `short:"r" long:"room" description:"Room name" required:"true"`
-	Password string `short:"p" long:"pass" description:"Password"`
-	Listen   uint   `short:"l" long:"listen" description:"Using port number"`
+	// Room     string `short:"r" long:"room" description:"Room name" required:"true"`
+	// Password string `short:"p" long:"pass" description:"Password"`
+	Listen uint `short:"l" long:"listen" description:"Using port number" default:"8986"`
 }
 
 var wg sync.WaitGroup
