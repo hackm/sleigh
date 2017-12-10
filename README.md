@@ -1,13 +1,11 @@
-# sleigh
-TBD
-# sleigh
+# Sleigh
 
-## About
+![build](https://travis-ci.org/hackm/sleigh.svg?branch=master) ![license](https://camo.githubusercontent.com/9e700fcd5dd47fa817872997918e8f741b9c4403/687474703a2f2f622e7265706c2e63612f76312f4c6963656e73652d4d49542d7265642e706e67)
 
-`Sleigh` is simple and light weight file sync tool. 
+`Sleigh` is simple and light weight file sync tool.
 You can sync file some os platform(Windows, Mac, Linux,,) in closed internet.
 
-## Run
+## Install
 
 How to run command.
 
@@ -35,6 +33,13 @@ go build
 ./sleigh
 ```
 
+## Usage
+
+```
+$cd /path/to/share_folder
+$sleigh -r hackm -p pass
+```
+
 ## Options
 
 | name | short | content |
@@ -44,3 +49,5 @@ go build
 | --listen | -l | listen port number. default:  |
 
 ## License
+
+MIT
