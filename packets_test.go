@@ -49,8 +49,8 @@ func TestNotificationSerialize(t *testing.T) {
 	if strings.Contains(str, `"hostname"`) == false {
 		t.Errorf("hotname not found")
 	}
-	if strings.Contains(str, `"dst"`) == false {
-		t.Errorf("dst not found")
+	if strings.Contains(str, `"ip"`) == false {
+		t.Errorf("ip not found")
 	}
 	if strings.Contains(str, `"event"`) == false {
 		t.Errorf("event not found")
