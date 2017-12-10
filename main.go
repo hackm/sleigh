@@ -166,6 +166,7 @@ func sleigh() {
 			case evt := <-tracker.Events:
 				n := Notification{
 					Hostname: hostname,
+					Ip:       ip,
 					Event:    evt.Op,
 					Type:     File,
 					Path:     evt.RelPath,
