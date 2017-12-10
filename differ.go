@@ -12,7 +12,6 @@ import (
 	"io"
 	"io/ioutil"
 	"math/big"
-	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -35,16 +34,17 @@ var blockSize int64 = 4 * MB
 
 type Differ struct {
 	hostname      string
-	ip            net.IP
+	ip            string
 	port          int
 	root          string
 	Notifications chan Notification
 	Errors        chan error
 }
 
-func NewDiffer(hostname string, port int, root string) *Differ {
+func NewDiffer(hostname, ip string, port int, root string) *Differ {
 	return &Differ{
 		hostname:      hostname,
+		ip:            ip,
 		port:          port,
 		root:          root,
 		Notifications: make(chan Notification, 1),
@@ -64,7 +64,7 @@ func (d *Differ) Start() error {
 	s.HandleFunc("/summaries", d.createSummaryHandler())
 
 	go func() {
-		err := http.ListenAndServe(fmt.Sprintf(":%d", d.port), s)
+		err := http.ListenAndServe(fmt.Sprintf("%s:%d", d.ip, d.port), s)
 		if err != nil {
 			color.Yellow("cannot listen http server: %v\n", err)
 		}

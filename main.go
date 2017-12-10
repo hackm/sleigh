@@ -84,7 +84,7 @@ func sleigh() {
 	tracker := NewTracker(wd, ignore)
 	defer tracker.Close()
 
-	differ := NewDiffer(hostname, int(options.Listen), wd)
+	differ := NewDiffer(hostname, ip, int(options.Listen), wd)
 	defer differ.Close()
 
 	go func() {
