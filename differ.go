@@ -88,6 +88,11 @@ func (d *Differ) Download(path, hostname string, port int) (*os.File, error) {
 	}
 
 	local := filepath.Join(d.root, path)
+	dir := filepath.Dir(local)
+	if _, err = os.Stat(dir); err != nil {
+		os.MkdirAll(dir, os.ModeDir)
+	}
+
 	input, err := os.OpenFile(local, os.O_RDONLY|os.O_CREATE, 0)
 	if err != nil {
 		return nil, err
