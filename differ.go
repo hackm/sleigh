@@ -123,7 +123,7 @@ func syncDeamon(d *Differ) {
 			if n.Type == File {
 				pc := make(chan int)
 				defer close(pc)
-				go showProgress(n.Path, pc, 100)
+				go showProgress(n.Path+"@"+n.Hostname, pc, 100)
 
 				temp, err := d.Download(n.Path, n.Hostname, d.port)
 				if err != nil {
