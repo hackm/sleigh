@@ -7,7 +7,7 @@ import (
 )
 
 func initializeConn() (conn *Conn) {
-	defaultPort := "8986"
+	defaultPort := uint(8986)
 	conn = NewConn(defaultPort)
 	return
 }
