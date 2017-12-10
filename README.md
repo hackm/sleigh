@@ -91,7 +91,7 @@ $ sleigh
 - [x] Multicast device connection
 - [x] File create sync
 - [x] File modified sync
-- [x] File deleted sync
+- [ ] File deleted sync
 - [ ] File rename sync
 - [ ] Change using port
 - [ ] Set room name and password
