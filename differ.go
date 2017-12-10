@@ -80,9 +80,9 @@ func (d *Differ) Close() {
 }
 
 // Download file(diff sync)
-func (d *Differ) Download(path string, ip net.IP, port int) (*os.File, error) {
-	contentURL := fmt.Sprintf("http://%s:%d/contents?path=%s", ip.String(), port, path)
-	summaryURL := fmt.Sprintf("http://%s:%d/summaries?path=%s&blockSize=%%d", ip.String(), port, path)
+func (d *Differ) Download(path, ip string, port int) (*os.File, error) {
+	contentURL := fmt.Sprintf("http://%s:%d/contents?path=%s", ip, port, path)
+	summaryURL := fmt.Sprintf("http://%s:%d/summaries?path=%s&blockSize=%%d", ip, port, path)
 	fmt.Println(contentURL)
 	fs, err := getSummary(summaryURL, blockSize)
 	if err != nil {

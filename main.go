@@ -53,14 +53,14 @@ func sleigh() {
 		os.Exit(1)
 	}
 	ip := getIp()
-	if ip == nil {
+	if ip == "" {
 		color.Yellow("Cannot get ip.")
 		os.Exit(1)
 	}
 
 	color.Green("Version\t\t\t%s\n", "alpha")
 	color.Green("Hostname\t\t%s\n", hostname)
-	color.Green("Local IP\t\t%s\n", ip.To4().String())
+	color.Green("Local IP\t\t%s\n", ip)
 
 	wd, err := os.Getwd()
 	if err != nil {
@@ -75,7 +75,7 @@ func sleigh() {
 
 	hey := Hey{
 		Hostname: hostname,
-		Ip:       *ip,
+		Ip:       ip,
 		Items:    items,
 	}
 
@@ -134,7 +134,7 @@ func sleigh() {
 							} else {
 								conn.Notify(Notification{
 									Hostname: hostname,
-									Ip:       *ip,
+									Ip:       ip,
 									Event:    fsnotify.Write,
 									Type:     File,
 									Path:     item.RelPath,
@@ -204,7 +204,7 @@ func sleigh() {
 	defer color.Unset()
 }
 
-func getIp() *net.IP {
+func getIp() string {
 	addrs, err := net.InterfaceAddrs()
 	if err != nil {
 		os.Stderr.WriteString(err.Error())
@@ -215,10 +215,10 @@ func getIp() *net.IP {
 			if ipnet.IP.To4() != nil {
 				str := ipnet.IP.String()
 				if strings.HasPrefix(str, "169.254") == false {
-					return &ipnet.IP
+					return str
 				}
 			}
 		}
 	}
-	return nil
+	return ""
 }

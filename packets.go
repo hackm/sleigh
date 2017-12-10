@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"io"
-	"net"
 
 	"github.com/Redundancy/go-sync/chunks"
 	"github.com/Redundancy/go-sync/filechecksum"
@@ -15,7 +14,7 @@ import (
 // Hey is first message packet through UDP multicast
 type Hey struct {
 	Hostname string `json:"hostname"`
-	Ip       net.IP `json:"ip"`
+	Ip       string `json:"ip"`
 	Items    []Item `json:"items"`
 }
 
@@ -43,7 +42,7 @@ type Notification struct {
 	Type     ItemType    `json:"type"`
 	Path     string      `json:"path"`
 	ModTime  int64       `json:"modtime"`
-	Ip       net.IP      `json:"ip"`
+	Ip       string      `json:"ip"`
 }
 
 // EncodeChecksumIndex encode ChecksumIndex of gosync
