@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+
+	"github.com/fatih/color"
 )
 
 const (
@@ -26,9 +28,9 @@ type Conn struct {
 }
 
 // NewConn is constructor for Conn
-func NewConn(listenPort string) *Conn {
+func NewConn(listenPort uint) *Conn {
 	return &Conn{
-		ListenAddr: multicastAddr + ":" + listenPort,
+		ListenAddr: fmt.Sprintf("%s:%d", multicastAddr, listenPort),
 		Datagram:   make(chan (Datagram)),
 		Errors:     make(chan (error)),
 	}
@@ -36,7 +38,7 @@ func NewConn(listenPort string) *Conn {
 
 // Listen to receive Datagram
 func (conn *Conn) Listen() {
-	fmt.Println(conn.ListenAddr)
+	color.Green("Using Multicast Address\t%s\n", conn.ListenAddr)
 	addr, err := net.ResolveUDPAddr("udp", conn.ListenAddr)
 	if err != nil {
 		conn.Errors <- err
@@ -53,7 +55,6 @@ func connDeamon(conn *Conn) {
 	for {
 		b := make([]byte, maxDatagramSize)
 		n, src, err := conn.listener.ReadFromUDP(b)
-		fmt.Printf("%d\n", n)
 		if err != nil {
 			conn.Errors <- err
 			continue

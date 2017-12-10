@@ -7,6 +7,12 @@ import (
 	pb "gopkg.in/cheggaaa/pb.v1"
 )
 
+var Red *color.Color = color.New(color.FgRed)
+var Green *color.Color = color.New(color.FgGreen)
+var Blue *color.Color = color.New(color.FgBlue)
+var Yellow *color.Color = color.New(color.FgYellow)
+var White *color.Color = color.New(color.FgWhite)
+
 func showTextLogo() {
 	logo := `
                     _...,

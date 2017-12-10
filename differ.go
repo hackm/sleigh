@@ -21,6 +21,7 @@ import (
 	"github.com/Redundancy/go-sync"
 	"github.com/Redundancy/go-sync/blocksources"
 	"github.com/Redundancy/go-sync/filechecksum"
+	"github.com/fatih/color"
 	"github.com/fsnotify/fsnotify"
 )
 
@@ -51,30 +52,23 @@ func NewDiffer(hostname string, port int, root string) *Differ {
 
 // Start differ
 func (d *Differ) Start() error {
-	fmt.Printf("gene\n")
-	err := geneCrt(crtFile, keyFile, d.hostname)
-	fmt.Printf("end\n")
-	if err != nil {
-		fmt.Printf("%v\n", err)
-		return err
-	}
+	// err := geneCrt(crtFile, keyFile, d.hostname)
+	// if err != nil {
+	// 	return err
+	// }
 
 	s := http.NewServeMux()
 	s.HandleFunc("/contents", d.createContentHandler())
 	s.HandleFunc("/summaries", d.createSummaryHandler())
 
-	fmt.Printf("ListenAndServeTLS;%v\n", fmt.Sprintf(":%d", d.port))
-
 	go func() {
-		err = http.ListenAndServe(fmt.Sprintf(":%d", d.port), s)
+		err := http.ListenAndServe(fmt.Sprintf(":%d", d.port), s)
 		if err != nil {
-			fmt.Printf("%v\n", err)
+			color.Yellow("cannot listen http server: %v\n", err)
 		}
 	}()
 
 	go syncDeamon(d)
-
-	fmt.Printf("finish\n")
 
 	return nil
 }
@@ -87,8 +81,6 @@ func (d *Differ) Close() {
 func (d *Differ) Download(path, hostname string, port int) (*os.File, error) {
 	contentURL := fmt.Sprintf("http://%s:%d/contents?path=%s", hostname, port, path)
 	summaryURL := fmt.Sprintf("http://%s:%d/summaries?path=%s&blockSize=%%d", hostname, port, path)
-	fmt.Printf("differ: %v\n", contentURL)
-	fmt.Printf("differ: %v\n", summaryURL)
 
 	fs, err := getSummary(summaryURL, blockSize)
 	if err != nil {
@@ -106,8 +98,6 @@ func (d *Differ) Download(path, hostname string, port int) (*os.File, error) {
 	if err != nil {
 		return nil, err
 	}
-	// defer os.Remove(temp.Name())
-	fmt.Printf("differ: pre rsync\n")
 
 	rsync := makeRSync(input, contentURL, temp, fs)
 	defer rsync.Close()
@@ -117,39 +107,25 @@ func (d *Differ) Download(path, hostname string, port int) (*os.File, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	// output, err := os.OpenFile(local, os.O_WRONLY|os.O_CREATE, 0)
-	// if err != nil {
-	// 	return err
-	// }
-	// err = output.Truncate(0)
-	// if err != nil {
-	// 	return err
-	// }
-	// _, err = io.Copy(output, temp)
-	// if err != nil {
-	// 	return err
-	// }
-
 	return temp, nil
 }
 
 func syncDeamon(d *Differ) {
 	for {
 		n := <-d.Notifications
-		fmt.Println("differ: Notification")
 		switch n.Event {
 		case fsnotify.Create, fsnotify.Write:
-			fmt.Println("differ: create")
 			if n.Type == File {
-				fmt.Println("differ: file")
+				pc := make(chan int)
+				defer close(pc)
+				go showProgress(n.Path, pc, 100)
 
 				temp, err := d.Download(n.Path, n.Hostname, d.port)
 				if err != nil {
 					d.Errors <- err
 					continue
 				}
-				fmt.Println("downloaded")
+				pc <- 98
 				temp.Seek(0, 0)
 				if err != nil {
 					d.Errors <- err
@@ -181,6 +157,7 @@ func syncDeamon(d *Differ) {
 						break
 					}
 				}
+				pc <- 100
 				os.Remove(temp.Name())
 				temp.Close()
 
@@ -208,7 +185,6 @@ func (d *Differ) createContentHandler() func(w http.ResponseWriter, req *http.Re
 	// handler for content download
 	return func(w http.ResponseWriter, req *http.Request) {
 		path := filepath.Join(d.root, req.URL.Query().Get("path"))
-		fmt.Printf("contentHandler: %v\n", path)
 		if _, err := os.Stat(path); err != nil {
 			http.NotFound(w, req)
 			return
@@ -223,7 +199,6 @@ func (d *Differ) createSummaryHandler() func(w http.ResponseWriter, req *http.Re
 		var blockSize uint64 = 1024 * 1024
 		blockSize, err := strconv.ParseUint(req.URL.Query().Get("blockSize"), 10, 32)
 		path := filepath.Join(d.root, req.URL.Query().Get("path"))
-		fmt.Printf("contentHandler: %v\n", path)
 		file, err := os.OpenFile(path, os.O_RDONLY, 0)
 		if err != nil {
 			http.NotFound(w, req)
@@ -237,8 +212,6 @@ func (d *Differ) createSummaryHandler() func(w http.ResponseWriter, req *http.Re
 			http.NotFound(w, req)
 			return
 		}
-
-		fmt.Printf("%v", info.Size())
 
 		b, err := EncodeChecksumIndex(file, info.Size(), uint(blockSize))
 		if err != nil {
@@ -332,7 +305,6 @@ func getSummary(urlFormat string, blockSize int64) (gosync.FileSummary, error) {
 		return nil, fmt.Errorf("NotFound")
 	}
 	if err != nil {
-		fmt.Println("err in getSummary1")
 		return nil, err
 	}
 
@@ -340,12 +312,10 @@ func getSummary(urlFormat string, blockSize int64) (gosync.FileSummary, error) {
 
 	fileSize, referenceFileIndex, checksumLookup, err := DecodeChecksumIndex(res.Body)
 	if err != nil {
-		fmt.Println("err in getSummary2")
 		return nil, err
 	}
 
 	if fileSize == 0 {
-		fmt.Println("fileSize is 0b")
 		return nil, fmt.Errorf("file size is 0b")
 	}
 

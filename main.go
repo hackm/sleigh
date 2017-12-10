@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -10,6 +9,7 @@ import (
 	"sync"
 	"syscall"
 
+	"github.com/fatih/color"
 	"github.com/fsnotify/fsnotify"
 	flags "github.com/jessevdk/go-flags"
 )
@@ -32,9 +32,6 @@ func main() {
 			os.Exit(1)
 		}
 	}
-	fmt.Printf("Room: %s\n", options.Room)
-	fmt.Printf("Password: %s\n", options.Password)
-	fmt.Printf("Listen: %d\n", options.Listen)
 	sleigh()
 }
 
@@ -49,26 +46,28 @@ func sleigh() {
 
 	hostname, err := os.Hostname()
 	if err != nil {
-		fmt.Println("Cannot get hostname.")
+		color.Yellow("Cannot get hostname.")
 		os.Exit(1)
 	}
-	fmt.Printf("%s\n", hostname)
+	color.Green("Version\t\t\t%s\n", "alpha")
+	color.Green("Hostname\t\t%s\n", hostname)
 	wd, err := os.Getwd()
 	if err != nil {
-		fmt.Println("Cannot get current working directory.")
+		color.Yellow("Cannot get current working directory.")
 		os.Exit(1)
 	}
 	items, err := GetItems(wd, wd, ignore)
 	if err != nil {
-		fmt.Println("Cannot get items in current working directory.")
+		color.Yellow("Cannot get items in current working directory.")
 		os.Exit(1)
 	}
+
 	hey := Hey{
 		Hostname: hostname,
 		Items:    items,
 	}
 
-	conn := NewConn("8986")
+	conn := NewConn(options.Listen)
 
 	tracker := NewTracker(wd, ignore)
 	defer tracker.Close()
@@ -86,17 +85,14 @@ func sleigh() {
 
 				if strings.Contains(str, `"type"`) {
 					_ = json.Unmarshal(d.Payload, &n)
-					fmt.Printf("Notification: %v", string(d.Payload))
 					differ.Notifications <- n
 				} else if err := json.Unmarshal(d.Payload, &h); err == nil {
-					fmt.Println("Hey")
+					color.Magenta("Hey! I'm %s", h.Hostname)
 					for _, item := range h.Items {
 						path := filepath.Join(wd, item.RelPath)
-						fmt.Println(path)
 
 						info, err := os.Stat(path)
 						if err != nil {
-							fmt.Println("here")
 							differ.Notifications <- Notification{
 								Hostname: h.Hostname,
 								Event:    fsnotify.Create,
@@ -108,13 +104,11 @@ func sleigh() {
 						}
 						checksum, err := GetChecksum(path)
 						if err != nil {
-							fmt.Printf("ERROR: %v\n", err)
+							color.Yellow("ERROR in GetChecksum: %v\n", err)
 							continue
 						}
 						modtime := info.ModTime().UnixNano()
 						if checksum != item.Checksum {
-							fmt.Printf("%v != %v\n", checksum, item.Checksum)
-							fmt.Printf("%v , %v\n", item.ModTime, modtime)
 							if item.ModTime > modtime {
 								differ.Notifications <- Notification{
 									Hostname: h.Hostname,
@@ -144,7 +138,6 @@ func sleigh() {
 						if hit == false {
 							path := filepath.Join(wd, local.RelPath)
 							info, _ := os.Stat(path)
-							fmt.Printf("lack %v\n", local.RelPath)
 							conn.Notify(Notification{
 								Hostname: hostname,
 								Event:    fsnotify.Create,
@@ -156,10 +149,9 @@ func sleigh() {
 					}
 				}
 			case evt := <-tracker.Events:
-				fmt.Println("Tracker")
 				info, err := os.Stat(evt.FullPath)
 				if err != nil {
-					fmt.Printf("ERROR: %v\n", err)
+					color.Yellow("ERROR in tracker: %v\n", err)
 					continue
 				}
 				var itemType = File
@@ -174,11 +166,11 @@ func sleigh() {
 					ModTime:  info.ModTime().UnixNano(),
 				})
 			case err := <-tracker.Errors:
-				fmt.Printf("ERROR: %v\n", err)
+				color.Yellow("ERROR in tracker: %v\n", err)
 			case err := <-differ.Errors:
-				fmt.Printf("ERROR: %v\n", err)
+				color.Yellow("ERROR in patcher: %v\n", err)
 			case err := <-conn.Errors:
-				fmt.Printf("ERROR: %v\n", err)
+				color.Yellow("ERROR in connector: %v\n", err)
 			}
 		}
 	}()
@@ -187,27 +179,7 @@ func sleigh() {
 	differ.Start()
 	tracker.Start()
 	conn.Hey(hey)
-	//differ.Notifications <- Notification{}
 
-	// /*
-	// 	*** mock work ***
-	// 	spawn some goroutines to do arbitrary work, updating their
-	// 	respective progress bars as they see fit
-	// */
-	// progressChannel := make(chan int)
-
-	// go showProgress("ProgressBar", progressChannel, 100)
-
-	// wg.Add(1)
-	// // do something asyn that we can get updates upon
-	// // every time an update comes in, tell the bar to re-draw
-	// // this could be based on transferred bytes or similar
-	// for i := 0; i <= 100; i++ {
-	// 	progressChannel <- i
-	// 	time.Sleep(time.Millisecond * 10)
-	// }
-	// close(progressChannel)
-	// wg.Done()
 	<-done
-	fmt.Println("Bye!")
+	color.Red("Bye!")
 }
