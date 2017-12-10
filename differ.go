@@ -306,11 +306,12 @@ func newClient() *http.Client {
 func getSummary(urlFormat string, blockSize int64) (gosync.FileSummary, error) {
 	res, err := newClient().Get(fmt.Sprintf(urlFormat, blockSize))
 
-	if res.StatusCode == 404 {
-		return nil, fmt.Errorf("NotFound")
-	}
 	if err != nil {
 		return nil, err
+	}
+
+	if res.StatusCode == 404 {
+		return nil, fmt.Errorf("NotFound")
 	}
 
 	defer res.Body.Close()
