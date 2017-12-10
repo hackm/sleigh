@@ -1,13 +1,35 @@
 # sleigh
-TBD
-# sleigh
 
-## About
+`Sleigh` is simple and light weight file sync tool.  
+You can sync file some os platform(Windows, Mac, Linux,,) in the Local Area Network.
 
-`Sleigh` is simple and light weight file sync tool. 
-You can sync file some os platform(Windows, Mac, Linux,,) in closed internet.
+[![Build Status](https://travis-ci.org/hackm/sleigh.svg?branch=master)](https://travis-ci.org/hackm/sleigh)
+[![Coverage Status](https://coveralls.io/repos/github/hackm/sleigh/badge.svg?branch=master)](https://coveralls.io/github/hackm/sleigh?branch=master)
+[![Go Report Card](https://goreportcard.com/badge/github.com/hackm/sleigh)](https://goreportcard.com/report/github.com/hackm/sleigh)
+[![MIT License](http://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/hackm/sleigh/blob/master/LICENSE)
 
-## Run
+```
+                    _...,
+              o_.-"`    `\
+       .--.  _ `'-._.-'""-;     _
+     .'    \`_\_  {_.-'""-}  _ / \              888        d8b        888
+   _/     .-'  '. {c-._o_.){\|`  |              888        Y8P        888
+  (@`-._ /       \{    ^  } \\ _/               888                   888
+    `~\  '-._      /'.     }  \}  .-.   .d8888b 888 .d88b. 888 .d88b. 88888b.
+     |>:<   '-.__/   '._,} \_/  / ())   88K     888d8P  Y8b888d88P"88b888 "88b
+     |     >:<   `'---. ____'-.|(`"`    "Y8888b.88888888888888888  888888  888
+     \            >:<  \\_\\_\ | ;           X88888Y8b.    888Y88b 888888  888
+      \                 \\-{}-\/  \      88888P'888 "Y8888 888 "Y88888888  888
+       \                 '._\\'   /)                               888
+        '.                       /(                           Y8b d88P
+          `-._ _____ _ _____ __.'\ \
+            / \     / \     / \   \ \
+         _.'/^\'._.'/^\'._.'/^\'.__) \
+     ,=='  `---`   '---'   '---'      )
+     `"""""""""""""""""""""""""""""""`
+```
+
+## Install
 
 How to run command.
 
@@ -35,6 +57,13 @@ go build
 ./sleigh
 ```
 
+## Usage
+
+```
+$cd /path/to/share_folder
+$sleigh -r hackm -p pass
+```
+
 ## Options
 
 | name | short | content |
@@ -43,4 +72,24 @@ go build
 | --password | -p | room password. |
 | --listen | -l | listen port number. default:  |
 
+## Motivation
+
+- 
+
+## TODO
+
+- [x] Multicast device connection
+- [x] File create sync
+- [x] File modified sync
+- [x] File deleted sync
+- [ ] File rename sync
+- [ ] Change using port
+- [ ] Set room name and password
+
+## Contribute
+
+Please follow [Contributor's Guide](CONTRIBUTING.md)
+
 ## License
+
+[MIT © HackM](LICENSE)
