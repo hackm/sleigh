@@ -30,8 +30,7 @@
 
 ## Demo
 
-TODO: demo page URL
-Live Demo
+![demo](https://github.com/hackm/sleigh/blob/master/images/sleigh.gif)
 
 ## Features
 
