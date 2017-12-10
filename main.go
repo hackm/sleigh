@@ -60,6 +60,7 @@ func sleigh() {
 
 	color.Green("Version\t\t\t%s\n", "alpha")
 	color.Green("Hostname\t\t%s\n", hostname)
+	color.Green("Local IP\t\t%s\n", ip.To4().String())
 
 	wd, err := os.Getwd()
 	if err != nil {
@@ -202,19 +203,19 @@ func sleigh() {
 }
 
 func getIp() *net.IP {
-	ifaces, _ := net.Interfaces()
-	// handle err
-	for _, i := range ifaces {
-		addrs, _ := i.Addrs()
-		// handle err
-		for _, addr := range addrs {
-			switch v := addr.(type) {
-			case *net.IPNet:
-				return &v.IP
-			case *net.IPAddr:
-				return &v.IP
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		os.Stderr.WriteString(err.Error())
+		os.Exit(1)
+	}
+	for _, a := range addrs {
+		if ipnet, ok := a.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+			if ipnet.IP.To4() != nil {
+				str := ipnet.IP.String()
+				if strings.HasPrefix(str, "169.254") == false {
+					return &ipnet.IP
+				}
 			}
-			// process IP address
 		}
 	}
 	return nil
