@@ -8,6 +8,7 @@ import (
 	"strings"
 	"sync"
 	"syscall"
+	"time"
 
 	"github.com/fatih/color"
 	"github.com/fsnotify/fsnotify"
@@ -151,22 +152,26 @@ func sleigh() {
 					}
 				}
 			case evt := <-tracker.Events:
-				info, err := os.Stat(evt.FullPath)
-				if err != nil {
-					color.Yellow("ERROR in tracker: %v\n", err)
-					continue
-				}
-				var itemType = File
-				if evt.Dir {
-					itemType = Dir
-				}
-				conn.Notify(Notification{
+				n := Notification{
 					Hostname: hostname,
 					Event:    evt.Op,
-					Type:     itemType,
+					Type:     File,
 					Path:     evt.RelPath,
-					ModTime:  info.ModTime().UnixNano(),
-				})
+					ModTime:  time.Now().UnixNano(),
+				}
+				if evt.Dir {
+					n.Type = Dir
+				}
+				if evt.Op != fsnotify.Rename && evt.Op != fsnotify.Remove {
+					info, err := os.Stat(evt.FullPath)
+					if err != nil {
+						color.Yellow("ERROR in tracker: %v\n", err)
+						continue
+					}
+					n.ModTime = info.ModTime().UnixNano()
+				}
+
+				conn.Notify(n)
 			case err := <-tracker.Errors:
 				color.Yellow("ERROR in tracker: %v\n", err)
 			case err := <-differ.Errors:
