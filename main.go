@@ -41,9 +41,10 @@ func ignore(evt Event) bool {
 
 func sleigh() {
 	showTextLogo()
+	defer color.Unset()
+
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, syscall.SIGINT)
-
 	hostname, err := os.Hostname()
 	if err != nil {
 		color.Yellow("Cannot get hostname.")
@@ -51,6 +52,7 @@ func sleigh() {
 	}
 	color.Green("Version\t\t\t%s\n", "alpha")
 	color.Green("Hostname\t\t%s\n", hostname)
+
 	wd, err := os.Getwd()
 	if err != nil {
 		color.Yellow("Cannot get current working directory.")
@@ -182,4 +184,5 @@ func sleigh() {
 
 	<-done
 	color.Red("Bye!")
+	defer color.Unset()
 }
