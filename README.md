@@ -1,7 +1,6 @@
 # sleigh
 
-`Sleigh` is simple and light weight file sync tool.  
-You can sync file some os platform(Windows, Mac, Linux,,) in the Local Area Network.
+'sleigh' is simple, quick, secure and lightweight file sync tool on the Local Area Network. On any platform (Windows, macOS, Linux), it's make you comfortable file sync.
 
 [![Build Status](https://travis-ci.org/hackm/sleigh.svg?branch=master)](https://travis-ci.org/hackm/sleigh)
 [![Coverage Status](https://coveralls.io/repos/github/hackm/sleigh/badge.svg?branch=master)](https://coveralls.io/github/hackm/sleigh?branch=master)
@@ -29,57 +28,64 @@ You can sync file some os platform(Windows, Mac, Linux,,) in the Local Area Netw
      `"""""""""""""""""""""""""""""""`
 ```
 
-## Install
+## Demo
 
-How to run command.
+TODO: demo page URL
+Live Demo
 
-### Download build file
+## Features
 
-Getting latest release build file.
-[release page](https://github.com/hackm/sleigh/releases)
+- Not require configuration
+- Easy Install
+- Real-Time synchronization
+- Quick synchronization
+- Only limited on the LAN
+- Windows, macOS and Linux support
+- Exciting synchronization views
+- HTTPS and authentication
 
-### App installer
+## Installation
 
-Install by brew
+Get the latest [release](https://github.com/hackm/sleigh/releases).
 
-```
+On macOS, sleigh can be installed via [Homebrew](https://brew.sh/)
+'''
 brew install sleigh
-```
+'''
 
-### Build from go get
+## Build
 
-If you can use go-lang build enviroment, getting newest version by self build.
+If you can use go build environment, getting the latest version by yourself own build.
 
-```
-go get github.com/hackm/sleigh
-cd $GOPATH/src/github.com/hackm/sleigh
-go build
-./sleigh
-```
+'''
+$ go get github.com/hackm/sleigh
+$ cd $GOPATH/src/github.com/hackm/sleigh
+$ go build && go install
+$ sleigh
+'''
 
 ## Usage
 
-```
-$cd /path/to/share_folder
-$sleigh -r hackm -p pass
-```
+'''
+$ cd /path/to/share_folder
+$ sleigh
+'''
 
 ## Options
 
 | name | short | content |
 |:----:|:----:|:-------:|
-| --room | -r | room name ex, "hackm". **required** |
-| --password | -p | room password. |
-| --listen | -l | listen port number. default:  |
+| --room | -r | room name e.g. "hackm". |
+| --listen | -l | listen port number. default: 8986 |
 
 ## Motivation
 
-- We want good tool for share files easily and fast in poor network. 
+- We want good tool for share files easily and fast in poor network.
 - It's may be beneficial for crowded place like hackathon venue.
-- We often face to take time to sync on Dropbox in there places.
+- We often face to take time to sync on Dropbox in their places.
 - AirDrop? I'm Windows User...
 - Resilio Sync? It's huge...
-- For us > For someone 
+- For us &gt; For someone
 
 ## TODO
 
