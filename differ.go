@@ -12,6 +12,7 @@ import (
 	"io"
 	"io/ioutil"
 	"math/big"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -34,6 +35,7 @@ var blockSize int64 = 4 * MB
 
 type Differ struct {
 	hostname      string
+	ip            net.IP
 	port          int
 	root          string
 	Notifications chan Notification
@@ -78,9 +80,9 @@ func (d *Differ) Close() {
 }
 
 // Download file(diff sync)
-func (d *Differ) Download(path, hostname string, port int) (*os.File, error) {
-	contentURL := fmt.Sprintf("http://%s:%d/contents?path=%s", hostname, port, path)
-	summaryURL := fmt.Sprintf("http://%s:%d/summaries?path=%s&blockSize=%%d", hostname, port, path)
+func (d *Differ) Download(path string, ip net.IP, port int) (*os.File, error) {
+	contentURL := fmt.Sprintf("http://%d.%d.%d.%d:%d/contents?path=%s", ip[0], ip[1], ip[2], ip[3], port, path)
+	summaryURL := fmt.Sprintf("http://%d.%d.%d.%d:%d/summaries?path=%s&blockSize=%%d", ip[0], ip[1], ip[2], ip[3], port, path)
 
 	fs, err := getSummary(summaryURL, blockSize)
 	if err != nil {
@@ -125,7 +127,7 @@ func syncDeamon(d *Differ) {
 				defer close(pc)
 				go showProgress(n.Path+"@"+n.Hostname, pc, 100)
 
-				temp, err := d.Download(n.Path, n.Hostname, d.port)
+				temp, err := d.Download(n.Path, n.Ip, d.port)
 				if err != nil {
 					d.Errors <- err
 					continue

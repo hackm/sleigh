@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"io"
+	"net"
 
 	"github.com/Redundancy/go-sync/chunks"
 	"github.com/Redundancy/go-sync/filechecksum"
@@ -41,7 +42,7 @@ type Notification struct {
 	Type     ItemType    `json:"type"`
 	Path     string      `json:"path"`
 	ModTime  int64       `json:"modtime"`
-	Dst      string      `json:"dst"`
+	Ip       net.IP      `json:"ip"`
 }
 
 // EncodeChecksumIndex encode ChecksumIndex of gosync

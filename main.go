@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"net"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -51,6 +52,12 @@ func sleigh() {
 		color.Yellow("Cannot get hostname.")
 		os.Exit(1)
 	}
+	ip := getIp()
+	if ip == nil {
+		color.Yellow("Cannot get ip.")
+		os.Exit(1)
+	}
+
 	color.Green("Version\t\t\t%s\n", "alpha")
 	color.Green("Hostname\t\t%s\n", hostname)
 
@@ -115,6 +122,7 @@ func sleigh() {
 							if item.ModTime > modtime {
 								differ.Notifications <- Notification{
 									Hostname: h.Hostname,
+									Ip:       d.SrcAddr.IP,
 									Event:    fsnotify.Write,
 									Type:     File,
 									Path:     item.RelPath,
@@ -123,6 +131,7 @@ func sleigh() {
 							} else {
 								conn.Notify(Notification{
 									Hostname: hostname,
+									Ip:       *ip,
 									Event:    fsnotify.Write,
 									Type:     File,
 									Path:     item.RelPath,
@@ -190,4 +199,23 @@ func sleigh() {
 	<-done
 	color.Red("Bye!")
 	defer color.Unset()
+}
+
+func getIp() *net.IP {
+	ifaces, _ := net.Interfaces()
+	// handle err
+	for _, i := range ifaces {
+		addrs, _ := i.Addrs()
+		// handle err
+		for _, addr := range addrs {
+			switch v := addr.(type) {
+			case *net.IPNet:
+				return &v.IP
+			case *net.IPAddr:
+				return &v.IP
+			}
+			// process IP address
+		}
+	}
+	return nil
 }
