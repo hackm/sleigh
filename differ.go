@@ -138,10 +138,10 @@ func syncDeamon(d *Differ) {
 					d.Errors <- err
 					continue
 				}
-				c1, _ := GetChecksum(temp.Name())
-				c2, _ := GetChecksum(filepath.Join(d.root, n.Path))
-				if c1 != c2 {
-					for {
+				for {
+					c1, _ := GetChecksum(temp.Name())
+					c2, _ := GetChecksum(filepath.Join(d.root, n.Path))
+					if c1 != c2 {
 						output, err := os.OpenFile(filepath.Join(d.root, n.Path), os.O_WRONLY|os.O_CREATE, 0)
 						if err != nil {
 							d.Errors <- err
@@ -161,8 +161,8 @@ func syncDeamon(d *Differ) {
 							continue
 						}
 						output.Close()
-						break
 					}
+					break
 				}
 				pc <- 100
 				os.Remove(temp.Name())

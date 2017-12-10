@@ -121,7 +121,7 @@ func sleigh() {
 							continue
 						}
 						modtime := info.ModTime().UnixNano()
-						if checksum != item.Checksum {
+						if checksum != item.Checksum && item.ModTime != modtime {
 							if item.ModTime > modtime {
 								differ.Notifications <- Notification{
 									Hostname: h.Hostname,
