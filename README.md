@@ -50,7 +50,7 @@ Get the latest [release](https://github.com/hackm/sleigh/releases).
 
 On macOS, sleigh can be installed via [Homebrew](https://brew.sh/)
 ```
-brew install sleigh
+$ brew install sleigh
 ```
 
 ## Build
@@ -76,7 +76,7 @@ $ sleigh
 | name | short | content |
 |:----:|:----:|:-------:|
 | --room | -r | room name e.g. "hackm". |
-| --listen | -l | listen port number. default: 8986 |
+| --listen | -l | listening UDP port. default: 8986 |
 
 ## Motivation
 
