@@ -75,6 +75,7 @@ func sleigh() {
 
 	hey := Hey{
 		Hostname: hostname,
+		Ip:       *ip,
 		Items:    items,
 	}
 
@@ -106,6 +107,7 @@ func sleigh() {
 						if err != nil {
 							differ.Notifications <- Notification{
 								Hostname: h.Hostname,
+								Ip:       h.Ip,
 								Event:    fsnotify.Create,
 								Type:     File,
 								Path:     item.RelPath,
@@ -123,7 +125,7 @@ func sleigh() {
 							if item.ModTime > modtime {
 								differ.Notifications <- Notification{
 									Hostname: h.Hostname,
-									Ip:       d.SrcAddr.IP,
+									Ip:       h.Ip,
 									Event:    fsnotify.Write,
 									Type:     File,
 									Path:     item.RelPath,

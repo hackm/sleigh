@@ -15,6 +15,7 @@ import (
 // Hey is first message packet through UDP multicast
 type Hey struct {
 	Hostname string `json:"hostname"`
+	Ip       net.IP `json:"ip"`
 	Items    []Item `json:"items"`
 }
 
