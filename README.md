@@ -1,6 +1,6 @@
 # sleigh
 
-'sleigh' is simple, quick, secure and lightweight file sync tool on the Local Area Network. On any platform (Windows, macOS, Linux), it's make you comfortable file sync.
+`sleigh` is simple, quick, secure and lightweight file sync tool on the Local Area Network. On any platform (Windows, macOS, Linux), it's make you comfortable file sync.
 
 [![Build Status](https://travis-ci.org/hackm/sleigh.svg?branch=master)](https://travis-ci.org/hackm/sleigh)
 [![Coverage Status](https://coveralls.io/repos/github/hackm/sleigh/badge.svg?branch=master)](https://coveralls.io/github/hackm/sleigh?branch=master)
@@ -49,27 +49,27 @@ Live Demo
 Get the latest [release](https://github.com/hackm/sleigh/releases).
 
 On macOS, sleigh can be installed via [Homebrew](https://brew.sh/)
-'''
+```
 brew install sleigh
-'''
+```
 
 ## Build
 
 If you can use go build environment, getting the latest version by yourself own build.
 
-'''
+```
 $ go get github.com/hackm/sleigh
 $ cd $GOPATH/src/github.com/hackm/sleigh
 $ go build && go install
 $ sleigh
-'''
+```
 
 ## Usage
 
-'''
+```
 $ cd /path/to/share_folder
 $ sleigh
-'''
+```
 
 ## Options
 
