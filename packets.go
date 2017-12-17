@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"io"
+	"os"
 
 	"github.com/Redundancy/go-sync/chunks"
 	"github.com/Redundancy/go-sync/filechecksum"
@@ -13,9 +14,9 @@ import (
 
 // Hey is first message packet through UDP multicast
 type Hey struct {
-	Hostname string `json:"hostname"`
-	Ip       string `json:"ip"`
-	Items    []Item `json:"items"`
+	Hostname string
+	IP       string
+	Items    []Item
 }
 
 // ItemType is type for tree item
@@ -30,23 +31,24 @@ const (
 
 // Item is directory tree struct
 type Item struct {
-	RelPath  string `json:"path"`
-	Checksum string `json:"checksum"`
-	ModTime  int64  `json:"modtime"`
+	RelPath  string
+	Checksum string
+	ModTime  int64
 }
 
-// Notification is packet for notify diff
+// Notification is packet at track every file changes
 type Notification struct {
-	Hostname string      `json:"hostname"`
-	Event    fsnotify.Op `json:"event"`
-	Type     ItemType    `json:"type"`
-	Path     string      `json:"path"`
-	ModTime  int64       `json:"modtime"`
-	Ip       string      `json:"ip"`
+	Hostname      string
+	Event         fsnotify.Op
+	Type          ItemType
+	RelPath       string
+	OldRelPath    string
+	ModTime       int64
+	IP            string
+	ChecksumIndex []byte
 }
 
-// EncodeChecksumIndex encode ChecksumIndex of gosync
-func EncodeChecksumIndex(content io.Reader, fileSize int64, blockSize uint) (io.ReadSeeker, error) {
+func encodeChecksumIndex(content io.Reader, fileSize int64, blockSize uint) ([]byte, error) {
 	generator := filechecksum.NewFileChecksumGenerator(uint(blockSize))
 	weakSize := generator.WeakRollingHash.Size()
 	strongSize := generator.GetStrongHash().Size()
@@ -59,7 +61,16 @@ func EncodeChecksumIndex(content io.Reader, fileSize int64, blockSize uint) (io.
 		return nil, err
 	}
 
-	return bytes.NewReader(b.Bytes()), nil
+	return b.Bytes(), nil
+}
+
+// EncodeChecksumIndex encode ChecksumIndex of gosync
+func EncodeChecksumIndex(content io.Reader, fileSize int64, blockSize uint) (io.ReadSeeker, error) {
+	b, err := encodeChecksumIndex(content, fileSize, blockSize)
+	if err != nil {
+		return nil, err
+	}
+	return bytes.NewReader(b), nil
 }
 
 // DecodeChecksumIndex decode EncodeChecksumIndex of gosync
@@ -99,15 +110,30 @@ func DecodeChecksumIndex(reader io.Reader) (fileSize int64, idx *index.ChecksumI
 	return
 }
 
-// helpers
-func intToBytes(val int) []byte {
-	bs := make([]byte, 4)
-	binary.LittleEndian.PutUint32(bs, uint32(val))
-	return bs
-}
+func createNotification(evt Event, hostname string) (*Notification, error) {
+	n := &Notification{
+		Hostname:   hostname,
+		Event:      evt.Op,
+		Type:       File,
+		RelPath:    evt.RelPath,
+		OldRelPath: evt.OldRelPath,
+	}
+	file, err := os.Open(evt.FullPath)
+	if err != nil {
+		return n, nil
+	}
+	stat, err := os.Stat(evt.FullPath)
+	if err != nil {
+		return n, nil
+	}
+	if stat.IsDir() {
+		n.Type = Dir
+	}
 
-func int64ToBytes(val int64) []byte {
-	bs := make([]byte, 8)
-	binary.LittleEndian.PutUint64(bs, uint64(val))
-	return bs
+	n.ChecksumIndex, err = encodeChecksumIndex(file, stat.Size(), BlockSize)
+	if err != nil {
+		return n, nil
+	}
+
+	return n, nil
 }

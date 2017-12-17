@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/fsnotify/fsnotify"
 )
@@ -83,12 +84,13 @@ func GetChecksum(path string) (string, error) {
 
 // Event is struct for item change event
 type Event struct {
-	Op       fsnotify.Op
-	FullPath string
-	RelPath  string
-	Parent   string
-	Name     string
-	Dir      bool
+	Op         fsnotify.Op
+	FullPath   string
+	RelPath    string
+	Parent     string
+	Name       string
+	Dir        bool
+	OldRelPath string
 }
 
 // IgnoreHandler is handler type for decision ignore file or directory
@@ -147,18 +149,42 @@ func (t *Tracker) addDirs(path string) error {
 }
 
 func track(t *Tracker) {
+	var rename *fsnotify.Event
+	var renameAt time.Time
 	for {
 		select {
 		case evt := <-t.watcher.Events:
-			event, err := t.convert(evt)
-			if err != nil {
-				t.Errors <- err
-			}
-			if t.ignore(event) == false {
-				if event.Dir && event.Op == fsnotify.Create {
-					t.watcher.Add(event.FullPath)
+			log.Printf("%v, %v\n", evt, rename)
+			if rename != nil {
+				if time.Now().Add(-100 * time.Millisecond).Before(renameAt) {
+					event, err := t.convert(evt, rename)
+					if err != nil {
+						t.Errors <- err
+					}
+					if t.ignore(event) == false {
+						if event.Dir && event.Op == fsnotify.Create {
+							t.watcher.Add(event.FullPath)
+						}
+						t.Events <- event
+					}
+					rename = nil
 				}
-				t.Events <- event
+			} else {
+				if evt.Op == fsnotify.Rename {
+					rename = &evt
+					renameAt = time.Now()
+					continue
+				}
+				event, err := t.convert(evt, nil)
+				if err != nil {
+					t.Errors <- err
+				}
+				if t.ignore(event) == false {
+					if event.Dir && event.Op == fsnotify.Create {
+						t.watcher.Add(event.FullPath)
+					}
+					t.Events <- event
+				}
 			}
 		case err := <-t.watcher.Errors:
 			t.Errors <- err
@@ -166,8 +192,12 @@ func track(t *Tracker) {
 	}
 }
 
-func (t *Tracker) convert(evt fsnotify.Event) (event Event, err error) {
+func (t *Tracker) convert(evt fsnotify.Event, rename *fsnotify.Event) (event Event, err error) {
 	event, err = newEvent(t.root, evt.Name, evt.Op)
+	if rename != nil {
+		event.Op = fsnotify.Rename
+		event.OldRelPath, err = filepath.Rel(t.root, rename.Name)
+	}
 	return
 }
 
@@ -181,6 +211,8 @@ func newEvent(root, fullpath string, op fsnotify.Op) (event Event, err error) {
 	if err != nil {
 		return
 	}
+	event.OldRelPath = event.RelPath
+
 	// Get relative directory path from root
 	event.Parent = filepath.Dir(event.RelPath)
 

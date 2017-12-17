@@ -1,225 +1,106 @@
 package main
 
 import (
-	"encoding/json"
-	"net"
+	"fmt"
+	"log"
+	"net/url"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"strings"
-	"sync"
 	"syscall"
-	"time"
+
+	"github.com/fsnotify/fsnotify"
 
 	"github.com/fatih/color"
-	"github.com/fsnotify/fsnotify"
-	flags "github.com/jessevdk/go-flags"
 )
 
-type Options struct {
-	// Room     string `short:"r" long:"room" description:"Room name" required:"true"`
-	// Password string `short:"p" long:"pass" description:"Password"`
-	Listen uint `short:"l" long:"listen" description:"Using port number" default:"8986"`
-}
-
-var wg sync.WaitGroup
-var options Options
-
 func main() {
-	var parser = flags.NewParser(&options, flags.Default)
-	if _, err := parser.Parse(); err != nil {
-		if flagsErr, ok := err.(*flags.Error); ok && flagsErr.Type == flags.ErrHelp {
-			os.Exit(0)
-		} else {
-			os.Exit(1)
-		}
-	}
-	sleigh()
-}
-
-func ignore(evt Event) bool {
-	return strings.Contains(evt.RelPath, ".sleigh")
-}
-
-func sleigh() {
-	showTextLogo()
-	defer color.Unset()
-
+	port := 8986
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, syscall.SIGINT)
+
 	hostname, err := os.Hostname()
 	if err != nil {
 		color.Yellow("Cannot get hostname.")
 		os.Exit(1)
 	}
-	ip := getIp()
-	if ip == "" {
-		color.Yellow("Cannot get ip.")
-		os.Exit(1)
-	}
-
-	color.Green("Version\t\t\t%s\n", "alpha")
-	color.Green("Hostname\t\t%s\n", hostname)
-	color.Green("Local IP\t\t%s\n", ip)
 
 	wd, err := os.Getwd()
 	if err != nil {
 		color.Yellow("Cannot get current working directory.")
 		os.Exit(1)
 	}
-	items, err := GetItems(wd, wd, ignore)
-	if err != nil {
-		color.Yellow("Cannot get items in current working directory.")
-		os.Exit(1)
+
+	localPathResolver := func(relpath string) string {
+		return filepath.Join(wd, relpath)
 	}
 
-	hey := Hey{
-		Hostname: hostname,
-		Ip:       ip,
-		Items:    items,
+	remoteURLResolver := func(n Notification) string {
+		v := url.Values{}
+		v.Set("path", n.RelPath)
+		return fmt.Sprintf("http://%s:%d/contents?%s", n.IP, port, v.Encode())
 	}
 
-	conn := NewConn(options.Listen)
+	target := func(evt Event) bool {
+		if evt.Op == fsnotify.Rename || evt.Op == fsnotify.Remove {
+			return true
+		}
+		if (evt.Op == fsnotify.Create || evt.Op == fsnotify.Write) && evt.Dir == false {
+			stat, err := os.Stat(evt.FullPath)
+			if err == nil && stat.Size() > 0 {
+				return true
+			}
+		}
+		return false
+	}
 
+	server := NewServer(hostname, port, localPathResolver)
+	patcher := NewPatcher(server.Notifications, remoteURLResolver, localPathResolver)
 	tracker := NewTracker(wd, ignore)
-	defer tracker.Close()
-
-	differ := NewDiffer(hostname, ip, int(options.Listen), wd)
-	defer differ.Close()
 
 	go func() {
 		for {
 			select {
-			case d := <-conn.Datagram:
-				var h Hey
-				var n Notification
-				str := string(d.Payload)
-
-				if strings.Contains(str, `"type"`) {
-					_ = json.Unmarshal(d.Payload, &n)
-					differ.Notifications <- n
-				} else if err := json.Unmarshal(d.Payload, &h); err == nil {
-					color.Magenta("Hey! I'm %s", h.Hostname)
-					for _, item := range h.Items {
-						path := filepath.Join(wd, item.RelPath)
-
-						info, err := os.Stat(path)
-						if err != nil {
-							differ.Notifications <- Notification{
-								Hostname: h.Hostname,
-								Ip:       h.Ip,
-								Event:    fsnotify.Create,
-								Type:     File,
-								Path:     item.RelPath,
-								ModTime:  item.ModTime,
-							}
-							continue
-						}
-						checksum, err := GetChecksum(path)
-						if err != nil {
-							color.Yellow("ERROR in GetChecksum: %v\n", err)
-							continue
-						}
-						modtime := info.ModTime().UnixNano()
-						if checksum != item.Checksum && item.ModTime != modtime {
-							if item.ModTime > modtime {
-								differ.Notifications <- Notification{
-									Hostname: h.Hostname,
-									Ip:       h.Ip,
-									Event:    fsnotify.Write,
-									Type:     File,
-									Path:     item.RelPath,
-									ModTime:  item.ModTime,
-								}
-							} else {
-								conn.Notify(Notification{
-									Hostname: hostname,
-									Ip:       ip,
-									Event:    fsnotify.Write,
-									Type:     File,
-									Path:     item.RelPath,
-									ModTime:  modtime,
-								})
-							}
-						}
-					}
-					for _, local := range items {
-						hit := false
-						for _, remote := range h.Items {
-							if local.RelPath == remote.RelPath {
-								hit = true
-							}
-						}
-						if hit == false {
-							path := filepath.Join(wd, local.RelPath)
-							info, _ := os.Stat(path)
-							conn.Notify(Notification{
-								Hostname: hostname,
-								Event:    fsnotify.Create,
-								Type:     File,
-								Path:     local.RelPath,
-								ModTime:  info.ModTime().UnixNano(),
-							})
-						}
-					}
-				}
 			case evt := <-tracker.Events:
-				n := Notification{
-					Hostname: hostname,
-					Ip:       ip,
-					Event:    evt.Op,
-					Type:     File,
-					Path:     evt.RelPath,
-					ModTime:  time.Now().UnixNano(),
+				if target(evt) == false {
+					continue
 				}
-				if evt.Dir {
-					n.Type = Dir
-				}
-				if evt.Op != fsnotify.Rename && evt.Op != fsnotify.Remove {
-					info, err := os.Stat(evt.FullPath)
+				log.Printf("%s %s\n", evt.Op.String(), evt.RelPath)
+				for _, ip := range server.Others() {
+					n, err := createNotification(evt, hostname)
 					if err != nil {
-						color.Yellow("ERROR in tracker: %v\n", err)
+						color.Yellow("Cannot create Notification: %s", err)
 						continue
 					}
-					n.ModTime = info.ModTime().UnixNano()
+					err = Notify(ip, port, n)
+					if err != nil {
+						color.Yellow("Cannot notify to %s:%d : %s", ip, port, err)
+						continue
+					}
 				}
-
-				conn.Notify(n)
+			case hey := <-server.Heys:
+				log.Printf("%s(%s): Hey!\n", hey.Hostname, hey.IP)
+			case err := <-server.Errors:
+				log.Printf("%+v\n", err)
+			case err := <-patcher.Errors:
+				log.Printf("%+v\n", err)
 			case err := <-tracker.Errors:
-				color.Yellow("ERROR in tracker: %v\n", err)
-			case err := <-differ.Errors:
-				color.Yellow("ERROR in patcher: %v\n", err)
-			case err := <-conn.Errors:
-				color.Yellow("ERROR in connector: %v\n", err)
+				log.Printf("%+v\n", err)
 			}
 		}
 	}()
 
-	conn.Listen()
-	differ.Start()
+	patcher.Start()
 	tracker.Start()
-	conn.Hey(hey)
+	server.Start()
+	defer server.Close()
 
 	<-done
 	color.Red("Bye!")
 	defer color.Unset()
 }
 
-func getIp() string {
-	addrs, err := net.InterfaceAddrs()
-	if err != nil {
-		os.Stderr.WriteString(err.Error())
-		os.Exit(1)
-	}
-	for _, a := range addrs {
-		if ipnet, ok := a.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
-			if ipnet.IP.To4() != nil {
-				str := ipnet.IP.String()
-				if strings.HasPrefix(str, "169.254") == false {
-					return str
-				}
-			}
-		}
-	}
-	return ""
+func ignore(evt Event) bool {
+	return strings.Contains(evt.RelPath, ".sleigh")
 }
