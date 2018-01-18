@@ -43,7 +43,7 @@
 - Exciting synchronization views
 - HTTPS and authentication
 
-## Installation
+## Installation (WIP)
 
 Get the latest [release](https://github.com/hackm/sleigh/releases).
 
@@ -54,6 +54,7 @@ $ brew install sleigh
 
 ## Build
 
+This project uses the [dep](https://github.com/golang/dep). Go check it out if you don't have them locally installed.  
 If you can use go build environment, getting the latest version by yourself own build.
 
 ```

@@ -1,4 +1,5 @@
 .vscode
-
 *.exe
 sleigh
+vendor/
+_vendor*/
