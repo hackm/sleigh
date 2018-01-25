@@ -24,7 +24,7 @@ func TestConvert_CreateFile(t *testing.T) {
 	evt, err := tr.convert(fsnotify.Event{
 		Op:   fsnotify.Create,
 		Name: file,
-	})
+	}, nil)
 
 	if err != nil {
 		t.Fatalf("cannot convert event: %v", err)
@@ -60,7 +60,7 @@ func TestConvert_CreateDir(t *testing.T) {
 	evt, err := tr.convert(fsnotify.Event{
 		Op:   fsnotify.Create,
 		Name: dir,
-	})
+	}, nil)
 
 	if err != nil {
 		t.Fatalf("cannot convert event: %v", err)
@@ -96,7 +96,7 @@ func TestConvert_RemoveFile(t *testing.T) {
 	evt, err := tr.convert(fsnotify.Event{
 		Op:   fsnotify.Remove,
 		Name: file,
-	})
+	}, nil)
 
 	if err != nil {
 		t.Fatalf("cannot convert event: %v", err)

@@ -14,14 +14,14 @@ func TestItemSerialize(t *testing.T) {
 		t.Fatalf("cannot serialize 'Item': %v", err)
 	}
 	str := string(b)
-	if strings.Contains(str, "path") == false {
-		t.Errorf("name not found")
+	if strings.Contains(str, "RelPath") == false {
+		t.Errorf("RelPath not found")
 	}
-	if strings.Contains(str, "checksum") == false {
-		t.Errorf("checksum not found")
+	if strings.Contains(str, "Checksum") == false {
+		t.Errorf("Checksum not found")
 	}
-	if strings.Contains(str, "modtime") == false {
-		t.Errorf("modtime not found")
+	if strings.Contains(str, "ModTime") == false {
+		t.Errorf("Modtime not found")
 	}
 }
 func TestHeySerialize(t *testing.T) {
@@ -31,11 +31,11 @@ func TestHeySerialize(t *testing.T) {
 		t.Fatalf("cannot serialize 'Hey' packet: %v", err)
 	}
 	str := string(b)
-	if strings.Contains(str, `"hostname"`) == false {
-		t.Errorf("hotname not found")
+	if strings.Contains(str, "Hostname") == false {
+		t.Errorf("Hotname not found")
 	}
-	if strings.Contains(str, `"items"`) == false {
-		t.Errorf("imtes not found")
+	if strings.Contains(str, "Items") == false {
+		t.Errorf("Imtes not found")
 	}
 }
 
@@ -46,23 +46,23 @@ func TestNotificationSerialize(t *testing.T) {
 		t.Fatalf("cannot serialize 'Notification' packet: %v", err)
 	}
 	str := string(b)
-	if strings.Contains(str, `"hostname"`) == false {
-		t.Errorf("hotname not found")
+	if strings.Contains(str, "Hostname") == false {
+		t.Errorf("Hotname not found")
 	}
-	if strings.Contains(str, `"ip"`) == false {
-		t.Errorf("ip not found")
+	if strings.Contains(str, "IP") == false {
+		t.Errorf("IP not found")
 	}
-	if strings.Contains(str, `"event"`) == false {
-		t.Errorf("event not found")
+	if strings.Contains(str, "Event") == false {
+		t.Errorf("Event not found")
 	}
-	if strings.Contains(str, `"type"`) == false {
-		t.Errorf("type not found")
+	if strings.Contains(str, "Type") == false {
+		t.Errorf("Type not found")
 	}
-	if strings.Contains(str, `"path"`) == false {
-		t.Errorf("path not found")
+	if strings.Contains(str, "Path") == false {
+		t.Errorf("Path not found")
 	}
-	if strings.Contains(str, `"modtime"`) == false {
-		t.Errorf("modtime not found")
+	if strings.Contains(str, "ModTime") == false {
+		t.Errorf("ModTime not found")
 	}
 }
 
