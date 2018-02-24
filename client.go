@@ -11,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Notify is informing another device of creating, changing or deleting the files
 func Notify(ip string, port int, n *Notification) error {
 	b, err := json.Marshal(n)
 	if err != nil {

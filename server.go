@@ -15,6 +15,7 @@ import (
 	"github.com/fatih/color"
 )
 
+// Server is to handle own file system changes and broadcast a notification to another notifier
 type Server struct {
 	Hostname         string
 	Notifications    chan Notification
@@ -26,6 +27,7 @@ type Server struct {
 	others           map[string]time.Time
 }
 
+// NewServer is constructor for creating server
 func NewServer(hostname string, port int, resolver LocalPathResolver) *Server {
 	return &Server{
 		Hostname:         hostname,
@@ -141,6 +143,7 @@ func (s *Server) heartbeat() {
 	}()
 }
 
+// Others manages another notifier
 func (s *Server) Others() []string {
 	pivot := time.Now().Add(-15 * time.Second)
 	ret := make([]string, 0, len(s.others))
@@ -152,6 +155,7 @@ func (s *Server) Others() []string {
 	return ret
 }
 
+// Close is called at exiting this application
 func (s *Server) Close() {
 	s.conn.Close()
 }

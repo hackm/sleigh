@@ -54,7 +54,7 @@ func GetItems(root string, dir string, ignore IgnoreHandler) ([]Item, error) {
 				}
 				items = append(items, children...)
 			} else {
-				checksum, err := GetChecksum(path)
+				checksum, err := getChecksum(path)
 				if err != nil {
 					return nil, err
 				}
@@ -69,7 +69,7 @@ func GetItems(root string, dir string, ignore IgnoreHandler) ([]Item, error) {
 	return items, err
 }
 
-func GetChecksum(path string) (string, error) {
+func getChecksum(path string) (string, error) {
 	reader, err := os.OpenFile(path, os.O_RDONLY, 000)
 	if err != nil {
 		return "", err

@@ -108,6 +108,7 @@ func createSummary(r io.Reader) (gosync.FileSummary, error) {
 	return fs, nil
 }
 
+// Multicast is base function for communicating with multicast
 func Multicast(port int, b []byte) (int, error) {
 	addr, err := net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%d", MulticastAddr, port))
 	if err != nil {

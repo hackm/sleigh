@@ -14,24 +14,29 @@ import (
 	"github.com/pkg/errors"
 )
 
-type RemoteUrlResolver func(n Notification) string
+type remoteURLResolver func(n Notification) string
+
+// LocalPathResolver is to resolve the file to the relative path from executeing path
 type LocalPathResolver func(relPath string) string
 
+// Patcher is to handle notification from another notifier
 type Patcher struct {
 	Notifications    chan Notification
 	Errors           chan error
-	remoteURLResolve RemoteUrlResolver
+	remoteURLResolve remoteURLResolver
 	localPathResolve LocalPathResolver
 }
 
-func NewPatcher(n chan Notification, remoteUrlResolve RemoteUrlResolver, localPathResolve LocalPathResolver) *Patcher {
+// NewPatcher is constructor for patch notifier
+func NewPatcher(n chan Notification, remoteURLResolve remoteURLResolver, localPathResolve LocalPathResolver) *Patcher {
 	return &Patcher{
 		Notifications:    n,
 		Errors:           make(chan error, 1),
-		remoteURLResolve: remoteUrlResolve,
+		remoteURLResolve: remoteURLResolve,
 		localPathResolve: localPathResolve,
 	}
 }
+
 func (p Patcher) equals(n Notification) (bool, error) {
 	fullpath := p.localPathResolve(n.RelPath)
 	stat, err := os.Stat(fullpath)
@@ -162,29 +167,35 @@ func (p *Patcher) try(fn func() error) {
 	}()
 }
 
+// Patch updates a file, receiving path notification
 func (p *Patcher) Patch(n Notification) {
 	p.try(func() error {
 		return p.patch(n)
 	})
 }
 
+// Download downloads a file, receiving download notification
 func (p *Patcher) Download(n Notification) {
 	p.try(func() error {
 		return p.download(n)
 	})
 }
 
+// Remove removes a file, receiving remove notification
 func (p *Patcher) Remove(n Notification) {
 	p.try(func() error {
 		return p.remove(n)
 	})
 }
+
+// Rename renames a file name to new name, receiving rename notification
 func (p *Patcher) Rename(n Notification) {
 	p.try(func() error {
 		return p.rename(n)
 	})
 }
 
+// Start launches patcher notifier daemon
 func (p *Patcher) Start() {
 	go func() {
 		for {
