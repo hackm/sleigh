@@ -2,9 +2,14 @@ package main
 
 import (
 	"encoding/json"
+	"io"
 	"os"
+	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/Redundancy/go-sync/filechecksum"
+	"github.com/Redundancy/go-sync/index"
 )
 
 func TestItemSerialize(t *testing.T) {
@@ -91,5 +96,122 @@ func TestEncodeDecodeChecksumIndex(t *testing.T) {
 	}
 	if checksum == nil {
 		t.Errorf("checksum is nil")
+	}
+}
+
+func Test_encodeChecksumIndex(t *testing.T) {
+	type args struct {
+		content   io.Reader
+		fileSize  int64
+		blockSize uint
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    []byte
+		wantErr bool
+	}{
+	// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := encodeChecksumIndex(tt.args.content, tt.args.fileSize, tt.args.blockSize)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("encodeChecksumIndex() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("encodeChecksumIndex() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestEncodeChecksumIndex(t *testing.T) {
+	type args struct {
+		content   io.Reader
+		fileSize  int64
+		blockSize uint
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    io.ReadSeeker
+		wantErr bool
+	}{
+	// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := EncodeChecksumIndex(tt.args.content, tt.args.fileSize, tt.args.blockSize)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("EncodeChecksumIndex() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("EncodeChecksumIndex() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestDecodeChecksumIndex(t *testing.T) {
+	type args struct {
+		reader io.Reader
+	}
+	tests := []struct {
+		name         string
+		args         args
+		wantFileSize int64
+		wantIdx      *index.ChecksumIndex
+		wantLookup   filechecksum.ChecksumLookup
+		wantErr      bool
+	}{
+	// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotFileSize, gotIdx, gotLookup, err := DecodeChecksumIndex(tt.args.reader)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("DecodeChecksumIndex() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if gotFileSize != tt.wantFileSize {
+				t.Errorf("DecodeChecksumIndex() gotFileSize = %v, want %v", gotFileSize, tt.wantFileSize)
+			}
+			if !reflect.DeepEqual(gotIdx, tt.wantIdx) {
+				t.Errorf("DecodeChecksumIndex() gotIdx = %v, want %v", gotIdx, tt.wantIdx)
+			}
+			if !reflect.DeepEqual(gotLookup, tt.wantLookup) {
+				t.Errorf("DecodeChecksumIndex() gotLookup = %v, want %v", gotLookup, tt.wantLookup)
+			}
+		})
+	}
+}
+
+func Test_createNotification(t *testing.T) {
+	type args struct {
+		evt      Event
+		hostname string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    *Notification
+		wantErr bool
+	}{
+	// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := createNotification(tt.args.evt, tt.args.hostname)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("createNotification() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("createNotification() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }
