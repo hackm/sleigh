@@ -47,7 +47,8 @@
 
 Get the latest [release](https://github.com/hackm/sleigh/releases).
 
-On macOS, sleigh can be installed via [Homebrew](https://brew.sh/)
+~~On macOS, sleigh can be installed via [Homebrew](https://brew.sh/)~~
+(Not published yet)
 ```
 $ brew install sleigh
 ```
@@ -60,6 +61,7 @@ If you can use go build environment, getting the latest version by yourself own 
 ```
 $ go get github.com/hackm/sleigh
 $ cd $GOPATH/src/github.com/hackm/sleigh
+$ dep ensure
 $ go build && go install
 $ sleigh
 ```
